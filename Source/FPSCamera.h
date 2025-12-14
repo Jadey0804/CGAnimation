@@ -116,7 +116,7 @@ public:
         ClientToScreen(window->hwnd, &center);
         SetCursorPos(center.x, center.y);
     }
-   
+   ////////////////////////////
     void reset(Vec3 newPosition = Vec3(0, 1.7f, 5), float newYaw = 0, float newPitch = 0) {
         position = newPosition;
         yaw = newYaw;
