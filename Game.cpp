@@ -228,7 +228,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, "Models/TRex.gem", &psos, &shaders);
 
-	//手动设置纹理路径（根据你的实际纹理文件）
+	//手动设置纹理路径
 	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
 	{
 		// 清空或设置默认路径
@@ -271,6 +271,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		//Matrix v = Matrix::lookAt(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
 		Matrix v = fpscamera.getViewMatrix();
 		vp = v * p;
+
+		//Matrix vvp;
+		//Vec3 from = Vec3(0, 5, 10);
+		//Matrix vv = Matrix::lookAt(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
+		//vvp = vv * p;
 
 
 		shaders.updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -333,7 +333,7 @@ public:
 		return mat;
 	}
 	static Matrix perspective(const float n, const float f, float aspect, const float fov) // FOV in degrees, outputs transposed Matrix for DX
-	{
+	{// Right-handed system， OpenGL style
 		Matrix pers;
 		memset(pers.m, 0, sizeof(float) * 16);
 		float t = 1.0f / (tanf(fov * 0.5f * 3.141592654f / 180.0f));
