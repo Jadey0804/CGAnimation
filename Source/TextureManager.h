@@ -55,10 +55,15 @@ public:
         }
 
         Texture* texture = new Texture();
-        texture->init(core, filename);
-        textures[filename] = texture;
+        if (texture->init(core, filename)) {
+            textures[filename] = texture;
 
-        return texture->heapOffset;
+            return texture->heapOffset;
+        }
+        else {
+            delete texture;
+            return -1;
+        }
     }
 
     int find(const std::string& filename)

@@ -13,6 +13,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include"FPSCamera.h"
+#include"skybox.h"
 
 // Properties -> Linker -> System -> Windows
 
@@ -24,18 +25,7 @@ class Plane
 {
 public:
 	Mesh mesh;
-	STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv)
-	{
-		STATIC_VERTEX v;
-		v.pos = p;
-		v.normal = n;
-		Frame frame;
-		frame.fromVector(n);
-		v.tangent = frame.u;
-		v.tu = tu;
-		v.tv = tv;
-		return v;
-	}
+
 	void init(Core* core, PSOManager *psos, Shaders* shaders)
 	{
 		std::vector<STATIC_VERTEX> vertices;
@@ -52,7 +42,7 @@ public:
 		indices.push_back(2);
 		mesh.init(core, vertices, indices);
 		
-		shaders->load(core, "StaticModelUntextured", "VS.txt", "PSUntextured.txt");
+		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VS.txt", "Source/ShaderFile/PSUntextured.txt");
 	
 		psos->createPSO(core, "StaticModelUntexturedPSO", shaders->find("StaticModelUntextured")->vs, shaders->find("StaticModelUntextured")->ps, VertexLayoutCache::getStaticLayout());
 	}
@@ -90,7 +80,7 @@ public:
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 		}
-		shaders->load(core, "StaticModelUntextured", "VS.txt", "PSUntextured.txt");
+		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VS.txt", "Source/ShaderFile/PSUntextured.txt");
 		psos->createPSO(core, "StaticModelPSO", shaders->find("StaticModelUntextured")->vs, shaders->find("StaticModelUntextured")->ps, VertexLayoutCache::getStaticLayout());
 	}
 	void updateWorld(Shaders* shaders, Matrix& w)
@@ -138,7 +128,7 @@ public:
 			std::string texFilename = gemmeshes[i].material.find("albedo").getValue();
 			textureFilenames.push_back(texFilename);
 		}
-		shaders->load(core, "AnimatedTextured", "VSAnimTextured.txt", "PSTextured.txt");
+		shaders->load(core, "AnimatedTextured", "Source/ShaderFile/VSAnimTextured.txt", "Source/ShaderFile/PSTextured.txt");
 		psos->createPSO(core, "AnimatedTexturedPSO",shaders->find("AnimatedTextured")->vs,shaders->find("AnimatedTextured")->ps,VertexLayoutCache::getAnimatedLayout());
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
 		for (int i = 0; i < gemanimation.bones.size(); i++)
@@ -228,6 +218,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, "Models/TRex.gem", &psos, &shaders);
 
+	Skybox skybox;
+	skybox.init(&core, &psos, &shaders, &textureManager,5000,500,10000);
+
 	//手动设置纹理路径
 	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
 	{
@@ -290,7 +283,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translation(Vec3(10, 0, 0));
 		staticModel.updateWorld(&shaders, W);
-		//staticModel.draw(&core, &psos, &shaders, vp);
+		staticModel.draw(&core, &psos, &shaders, vp);
 
 
 		animatedInstance.update("run", dt);
@@ -302,6 +295,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		shaders.updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 		W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
 		animatedModel.draw(&core, &psos, &shaders, &textureManager, &animatedInstance, vp, W);
+
+		W = Matrix::translation(fpscamera.position);
+		v = v.removeTranslation();
+		vp = v * p;
+		skybox.draw(&core, &psos, &shaders, &textureManager, dt, &W, &vp);
 
 		core.finishFrame();
 	}

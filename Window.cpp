@@ -143,6 +143,7 @@ void Window::create(int window_width, int window_height, const std::string windo
 	SetForegroundWindow(hwnd);
 	SetFocus(hwnd);
 	useMouseClip = false;
-	ShowCursor(true);
+	ShowCursor(false);
+
 	window = this;
 }

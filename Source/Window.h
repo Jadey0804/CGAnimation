@@ -28,6 +28,7 @@ public:
 		mousey = y;
 	}
 	void processMessages();
+	void resetCursorToCenter();
 	void create(int window_width, int window_height, const std::string window_name, float zoom = 1.0f, bool window_fullscreen = false, int window_x = 0, int window_y = 0);
 	void checkInput()
 	{

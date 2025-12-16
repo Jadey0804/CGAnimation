@@ -106,6 +106,16 @@ public:
 		mat.a[2][3] = v.z;
 		return mat;
 	}
+
+	Matrix removeTranslation() const {
+	
+		Matrix mat = *this;
+		mat.a[0][3] = 0;
+		mat.a[1][3] = 0;
+		mat.a[2][3] = 0;
+		return mat;
+	}
+
 	static Matrix scaling(const Vec3& v)
 	{
 		Matrix mat;
@@ -358,6 +368,8 @@ public:
 			0, 0, 0, 1
 		);
 	}
+
+
 };
 
 class Quaternion
