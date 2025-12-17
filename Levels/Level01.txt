@@ -1,0 +1,4 @@
+# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
+STATIC  Models/acacia_003.gem          10 0 0     0.01 0.01 0.01  0 0 0
+STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01  0 45 0
+ANIM    Models/TRex.gem                 0 0 0     0.01 0.01 0.01  0 180 0  run

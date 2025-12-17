@@ -4,6 +4,15 @@
 #include <vector>
 #include <map>
 
+#include <algorithm>   
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 #include "Maths.h"
 
 struct Bone
@@ -58,7 +67,7 @@ struct AnimationSequence // This holds rescaled times
 		interpolationFact = t * ticksPerSecond;
 		frame = (int)floorf(interpolationFact);
 		interpolationFact = interpolationFact - (float)frame;
-		frame = std::min(frame, (int)(frames.size() - 1));
+		frame = (std::min)(frame, (int)(frames.size() - 1));//frame = std::min(frame, (int)(frames.size() - 1));
 	}
 	bool running(float t)
 	{
@@ -70,7 +79,7 @@ struct AnimationSequence // This holds rescaled times
 	}
 	int nextFrame(int frame)
 	{
-		return std::min(frame + 1, (int)(frames.size() - 1));
+		return (std::min)(frame + 1, (int)(frames.size() - 1));//return std::min(frame + 1, (int)(frames.size() - 1));
 	}
 	Matrix interpolateBoneToGlobal(Matrix* matrices, int baseFrame, float interpolationFact, Skeleton* skeleton, int boneIndex)
 	{

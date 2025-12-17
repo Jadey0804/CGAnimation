@@ -79,8 +79,10 @@ public:
     void draw(Core* core, PSOManager* psos, Shaders* shaders, TextureManager* textureManager, float time, Matrix* W, Matrix* vp) {
         shaders->updateConstantVS(shaderName, cbName, "VP", vp);
         shaders->updateConstantVS(shaderName, cbName, "W", W);
-        shaders->apply(core, shaderName);
+       
         psos->bind(core, PSOName);
+        shaders->apply(core, shaderName);
+        
 		int offset = textureManager->find(textureName);
 		shaders->updateTexturePS(core, shaderName, texSlot, offset);
 

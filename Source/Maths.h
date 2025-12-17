@@ -546,7 +546,7 @@ public:
 	}
 };
 
-Vec3 sphericalToVector(const float theta, const float phi)
+inline Vec3 sphericalToVector(const float theta, const float phi)
 {
 	float ct = cosf(theta);
 	float st = sqrtf(1.0f - (ct * ct));
