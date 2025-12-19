@@ -37,7 +37,7 @@ public:
 			std::string texFilename = gemmeshes[i].material.find("albedo").getValue();
 			textureFilenames.push_back(texFilename);
 		}
-		shaders->load(core, "AnimatedTextured", "Source/ShaderFile/VSAnimTextured.txt", "Source/ShaderFile/PSTextured.txt");
+		shaders->load(core, "AnimatedTextured", "Source/ShaderFile/VSAnimTextured.txt", "Source/ShaderFile/PSAnimTextured.txt");
 		psos->createPSO(core, "AnimatedTexturedPSO", shaders->find("AnimatedTextured")->vs, shaders->find("AnimatedTextured")->ps, VertexLayoutCache::getAnimatedLayout());
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
 		for (int i = 0; i < gemanimation.bones.size(); i++)

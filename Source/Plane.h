@@ -25,17 +25,17 @@ public:
 		indices.push_back(2);
 		mesh.init(core, vertices, indices);
 
-		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VS.txt", "Source/ShaderFile/PSUntextured.txt");
+		shaders->load(core, "Plane_Textured", "Source/ShaderFile/PlaneTexturedVS.txt", "Source/ShaderFile/PlaneTexturedPS.txt");
 
-		psos->createPSO(core, "StaticModelUntexturedPSO", shaders->find("StaticModelUntextured")->vs, shaders->find("StaticModelUntextured")->ps, VertexLayoutCache::getStaticLayout());
+		psos->createPSO(core, "Plane_TexturedPSO", shaders->find("Plane_Textured")->vs, shaders->find("Plane_Textured")->ps, VertexLayoutCache::getStaticLayout());
 	}
 	void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp)
 	{
 		Matrix planeWorld;
-		shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
-		shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "W", &planeWorld);
-		psos->bind(core, "StaticModelUntexturedPSO");
-		shaders->apply(core, "StaticModelUntextured");
+		shaders->updateConstantVS("Plane_Textured", "staticMeshBuffer", "VP", &vp);
+		shaders->updateConstantVS("Plane_Textured", "staticMeshBuffer", "W", &planeWorld);
+		psos->bind(core, "Plane_TexturedPSO");
+		shaders->apply(core, "Plane_Textured");
 		
 		mesh.draw(core);
 	}

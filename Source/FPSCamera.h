@@ -16,34 +16,33 @@ public:
     bool firstMouse = true;
 
     void update(float dt, Window* window) {
-        // 获取当前鼠标位置
+        // 1. 获取窗口中心
+        RECT rect;
+        GetClientRect(window->hwnd, &rect);
+        int centerX = rect.right / 2;
+        int centerY = rect.bottom / 2;
+
+        // 2. 当前鼠标位置（窗口坐标）
         int mouseX = window->getMouseInWindowX();
         int mouseY = window->getMouseInWindowY();
 
-        // 第一次更新，初始化鼠标位置
-        if (firstMouse) {
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
-            firstMouse = false;
-            return;
-        }
+        // 3. 偏移 = 相对中心
+        int deltaX = mouseX - centerX;
+        int deltaY = mouseY - centerY;
 
-        // 计算鼠标移动差值
-        int deltaX = mouseX - lastMouseX;
-        int deltaY = mouseY - lastMouseY;
-
-        // 更新视角
+        // 4. 更新角度
         yaw -= deltaX * mouseSensitivity;
-        pitch += deltaY * mouseSensitivity; // Y轴反zhuan
+       // pitch += deltaY * mouseSensitivity;
+        pitch -= deltaY * mouseSensitivity;
 
-        // 限制俯仰角（避免翻转）
-        pitch = clamp(pitch, -1.5f, 1.5f); // 约±86°
 
-        //window->setMousePositionToCenter();
 
-        // 保存当前鼠标位置
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
+        // 5. 限制 pitch（防止翻转）
+        pitch = clamp(pitch, -1.5f, 1.5f);
+
+        // 6. **关键：立刻把鼠标重置回中心**
+        window->setMousePositionToCenter();
+
 
         // 键盘移动
         Vec3 moveDir(0, 0, 0);
@@ -77,22 +76,49 @@ public:
         
     }
 
-    Matrix getViewMatrix() {
-        // 计算方向向量
-        Matrix rotY = Matrix::rotateY(yaw);//偏航角（左右转头）绕Y轴
-        Matrix rotX = Matrix::rotateX(pitch);//俯仰角（上下转头）
-        Matrix totalRot = rotY * rotX;//注意顺序，先绕X轴旋转，再绕Y轴
+    //Matrix getViewMatrix() {
+    //    // 计算方向向量
+    //    Matrix rotY = Matrix::rotateY(yaw);//偏航角（左右转头）绕Y轴
+    //    Matrix rotX = Matrix::rotateX(pitch);//俯仰角（上下转头）
+    //    Matrix totalRot = rotY * rotX;//注意顺序，先绕X轴旋转，再绕Y轴
 
-        Vec3 forward = totalRot.mulVec(Vec3(0, 0, -1));
-        //Vec3 up = rotX.mulVec(Vec3(0, 1, 0));
-        Vec3 up = Vec3(0, 1, 0);
+    //    Vec3 forward = totalRot.mulVec(Vec3(0, 0, -1));
+    //    //Vec3 up = rotX.mulVec(Vec3(0, 1, 0));
+    //    Vec3 up = Vec3(0, 1, 0);
 
-        // 计算目标点
+    //    // 计算目标点
+    //    Vec3 target = position + forward;
+
+    //    // 返回视图矩阵
+    //    return Matrix::lookAt(position, target, up);
+    //}
+
+
+    Matrix getViewMatrix()
+    {
+        // 1) 用 yaw/pitch 直接算 forward（避免旋转顺序/轴的问题）
+        float cosPitch = cosf(pitch);
+        float sinPitch = sinf(pitch);
+        float cosYaw = cosf(yaw);
+        float sinYaw = sinf(yaw);
+
+        // 这里的 forward 让 yaw=0 时朝向 -Z（和你原来一致）
+        Vec3 forward(
+            sinYaw * cosPitch,
+            sinPitch,
+            -cosYaw * cosPitch
+        );
+        forward = forward.normalize();
+
+        // 2) 用 worldUp 动态算 right/up，避免“看向背后时上下翻转”
+        Vec3 worldUp(0, 1, 0);
+        Vec3 right = Cross(worldUp, forward).normalize();
+        Vec3 up = Cross(forward, right).normalize();
+
         Vec3 target = position + forward;
-
-        // 返回视图矩阵
         return Matrix::lookAt(position, target, up);
     }
+
 
     Matrix getViewMatrix2() {
         // 方法1：直接构建视图矩阵（更可靠）

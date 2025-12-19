@@ -29,7 +29,7 @@ public:
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 		}
-		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VS.txt", "Source/ShaderFile/PSUntextured.txt");
+		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VSUntextured.txt", "Source/ShaderFile/PSUntextured.txt");
 		psos->createPSO(core, "StaticModelPSO", shaders->find("StaticModelUntextured")->vs, shaders->find("StaticModelUntextured")->ps, VertexLayoutCache::getStaticLayout());
 	}
 	void updateWorld(Shaders* shaders, Matrix& w)
