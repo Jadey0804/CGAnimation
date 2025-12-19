@@ -2,9 +2,6 @@
 #include <fstream>
 #include <sstream>
 
-// 你项目里用到的：Shaders::updateConstantVS(...) 在 Game.cpp 里已存在 :contentReference[oaicite:3]{index=3}
-
-//#include <new>// for std::align_val_t
 #include <malloc.h>   // _aligned_malloc / _aligned_free
 
 
@@ -22,7 +19,20 @@ void Level::freeAlignedAnim(AnimatedModel* p)
     _aligned_free(p);
 }
 
+// 为 AnimationInstance 分配 64 字节对齐内存
+AnimationInstance* Level::allocAlignedAnimInstance()
+{
+    void* mem = _aligned_malloc(sizeof(AnimationInstance), 64);
+    if (!mem) return nullptr;
+    return new (mem) AnimationInstance();
+}
 
+void Level::freeAlignedAnimInstance(AnimationInstance* p)
+{
+    if (!p) return;
+    p->~AnimationInstance();
+    _aligned_free(p);
+}
 
 
 void Level::init(Core* core, PSOManager* psos, Shaders* shaders, TextureManager* textures,
@@ -38,6 +48,16 @@ void Level::init(Core* core, PSOManager* psos, Shaders* shaders, TextureManager*
 
 void Level::clear()
 {
+    // 释放所有 AnimationInstance
+    for (auto& e : m_animEntries)
+    {
+        if (e.instance)
+        {
+            freeAlignedAnimInstance(e.instance);
+            e.instance = nullptr;
+        }
+    }
+
     m_objects.clear();
     m_objectToAnimIndex.clear();
     m_animEntries.clear();
@@ -55,7 +75,6 @@ StaticModel* Level::getOrLoadStatic(const std::string& path)
     if (it != m_staticCache.end()) return it->second;
 
     auto* m = new StaticModel();
-    // StaticModel::load(Core*, std::string, Shaders*, PSOManager*) :contentReference[oaicite:4]{index=4}
     m->load(m_core, path, m_shaders, m_psos);
     m_staticCache[path] = m;
     return m;
@@ -69,15 +88,12 @@ AnimatedModel* Level::getOrLoadAnim(const std::string& path)
     auto* m = allocAlignedAnim();
     m->load(m_core, path, m_psos, m_shaders);
 
-    // ——对齐你在 Game.cpp 里对 TRex 贴图的“手动指定 + 预加载”逻辑 :contentReference[oaicite:6]{index=6}
-    // 如果该模型有 mesh 但贴图名没填，就全部指定为你当前使用的贴图：
     if (!m->textureFilenames.empty())
     {
         for (auto& s : m->textureFilenames)
         {
             if (s.empty())
                 s = "Models/Textures/T-rex_Base_Color_alb.png";
-            // 预加载纹理索引（你的 TextureManager 有 getTextureIndex 用法） :contentReference[oaicite:7]{index=7}
             m_textures->getTextureIndex(s);
         }
     }
@@ -90,6 +106,16 @@ bool Level::loadFromFile(const std::string& levelPath)
 {
     std::ifstream f(levelPath);
     if (!f.is_open()) return false;
+
+    // 先清理旧数据
+    for (auto& e : m_animEntries)
+    {
+        if (e.instance)
+        {
+            freeAlignedAnimInstance(e.instance);
+            e.instance = nullptr;
+        }
+    }
 
     m_objects.clear();
     m_objectToAnimIndex.clear();
@@ -126,9 +152,13 @@ bool Level::loadFromFile(const std::string& levelPath)
                 e.animName = "";
             }
 
-            // AnimationInstance::init(Animation*, int) :contentReference[oaicite:8]{index=8}
-            e.instance.init(&e.model->animation, 0);
-            e.inited = true;
+            // 使用对齐内存分配 AnimationInstance
+            e.instance = allocAlignedAnimInstance();
+            if (e.instance)
+            {
+                e.instance->init(&e.model->animation, 0);
+                e.inited = true;
+            }
 
             animIndex = (int)m_animEntries.size();
             m_animEntries.push_back(std::move(e));
@@ -146,31 +176,30 @@ void Level::update(float dt)
     for (auto& e : m_animEntries)
     {
         if (!e.inited) continue;
+        if (!e.instance) continue;
         if (e.animName.empty()) continue;
 
         // 保护：动画名不存在则不更新
         if (!e.model->animation.hasAnimation(e.animName)) continue;
 
-        // AnimationInstance::update(name, dt) :contentReference[oaicite:9]{index=9}
-        e.instance.update(e.animName, dt);
+        e.instance->update(e.animName, dt);
 
-        if (e.instance.animationFinished())
+        if (e.instance->animationFinished())
         {
-            e.instance.resetAnimationTime();
+            e.instance->resetAnimationTime();
         }
     }
 }
 
 void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
 {
-    // 你 Game.cpp 里会更新 StaticModelUntextured / AnimatedTextured 的 VP 常量 :contentReference[oaicite:10]{index=10}
     m_shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
     m_shaders->updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 
-    // 先画 plane（接口：Plane::draw(Core*,PSOManager*,Shaders*,Matrix)） :contentReference[oaicite:11]{index=11}
+    // 先画 plane
     if (m_plane)
     {
-        m_plane->draw(m_core, m_psos, m_shaders, vp);
+        m_plane->draw(m_core, m_psos, m_shaders, m_textures, vp);
     }
 
     // 再画静态/动画对象
@@ -182,7 +211,6 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
         {
             StaticModel* m = getOrLoadStatic(o.modelPath);
             Matrix W = buildWorld(o);
-            // updateWorld(Shaders*, Matrix&) + draw(Core*,PSOManager*,Shaders*,Matrix&) :contentReference[oaicite:12]{index=12}
             m->updateWorld(m_shaders, W);
             m->draw(m_core, m_psos, m_shaders, vp);
         }
@@ -192,18 +220,19 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
             if (idx < 0 || idx >= (int)m_animEntries.size()) continue;
 
             AnimEntry& e = m_animEntries[idx];
+            if (!e.instance) continue;  // 添加空指针检查
+
             Matrix W = buildWorld(o);
 
-            // AnimatedModel::draw(Core*,PSOManager*,Shaders*,TextureManager*,AnimationInstance*,Matrix&,Matrix&) :contentReference[oaicite:13]{index=13}
-            e.model->draw(m_core, m_psos, m_shaders, m_textures, &e.instance, vp, W);
+            e.model->draw(m_core, m_psos, m_shaders, m_textures, e.instance, vp, W);
         }
     }
 
-    // 最后画 skybox：W=translation(cameraPos), VP=无平移的 skyVP
+    // 最后画 skybox
     if (m_skybox)
     {
         Matrix W = Matrix::translation(cameraPos);
-        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP); //:contentReference[oaicite:14]{ index = 14 }
+        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP);
     }
 }
 

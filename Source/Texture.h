@@ -1,5 +1,4 @@
-﻿
-#pragma once
+﻿#pragma once
 #include "stb_image.h"
 #include "Core.h"
 #include <string>
@@ -8,12 +7,18 @@
 class Texture
 {
 public:
-    ID3D12Resource* tex;
-    int heapOffset;
-    int width, height, channels;
+    ID3D12Resource* tex = nullptr;  // 初始化为 nullptr
+    int heapOffset = -1;
+    int width = 0, height = 0, channels = 0;
+
+    // 禁止复制构造和赋值操作，防止双重释放
+    Texture() = default;
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
 
     bool init(Core* core, const std::string& filename)
     {
+
         // 使用stb_image加载纹理
         unsigned char* texels = stbi_load(filename.c_str(), &width, &height, &channels, 0);
         if (!texels)
@@ -100,7 +105,11 @@ public:
 
     void cleanUp()
     {
-        if (tex) tex->Release();
+        if (tex) 
+        {
+            tex->Release();
+            tex = nullptr;  // 释放后置为 nullptr，防止双重释放
+        }
     }
 
     ~Texture()

@@ -1,6 +1,4 @@
-﻿
-
-#include "Core.h"
+﻿#include "Core.h"
 #include "Window.h"
 #include "Timer.h"
 #include "Maths.h"
@@ -10,8 +8,8 @@
 #include "GEMLoader.h"
 #include "Animation.h"
 #include "TextureManager.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 #include"FPSCamera.h"
 #include"skybox.h"
 #include"Level.h"
@@ -22,6 +20,7 @@
 #include <Plane.h>
 #include <StaticModel.h>
 #include <AnimatedModel.h>
+#include <malloc.h>  // for _aligned_malloc
 #pragma comment(lib, "d3dcompiler.lib")
 
 
@@ -47,14 +46,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Shaders shaders;
 	PSOManager psos;
 
-	Plane plane;
-	plane.init(&core, &psos, &shaders);
-
 	StaticModel staticModel;
 	staticModel.load(&core, "Models/acacia_003.gem", &shaders, &psos);
 
 	TextureManager textureManager;
 	textureManager.init(&core); // Re-enable textureManager initialization
+
+	Plane plane;
+	plane.init(&core, &psos, &shaders, &textureManager);
+
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, "Models/TRex.gem", &psos, &shaders);
 
@@ -68,17 +68,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	level.loadFromFile("Levels/Level01.txt");
 
 	//手动设置纹理路径
-	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
+	for (size_t i = 0; i < animatedModel.textureFilenames.size(); i++)
 	{
 		// 清空或设置默认路径
 		animatedModel.textureFilenames[i] = "Models/Textures/T-rex_Base_Color_alb.png";
-		// 或者根据网格部分设置不同的纹理
-		// if (i == 0) animatedModel.textureFilenames[i] = "Models/TRex_body.png";
-		// else if (i == 1) animatedModel.textureFilenames[i] = "Models/TRex_eyes.png";
 	}
 
 	// 然后确保纹理被加载
-	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
+	for (size_t i = 0; i < animatedModel.textureFilenames.size(); i++)
 	{
 		if (!animatedModel.textureFilenames[i].empty())
 		{
@@ -86,8 +83,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		}
 	}
 
-	AnimationInstance animatedInstance;
-	animatedInstance.init(&animatedModel.animation, 0);
+	// 使用对齐内存分配 AnimationInstance（Matrix 需要 64 字节对齐）
+	AnimationInstance* animatedInstance = (AnimationInstance*)_aligned_malloc(sizeof(AnimationInstance), 64);
+	new (animatedInstance) AnimationInstance();
+	animatedInstance->init(&animatedModel.animation, 0);
 
 	Timer timer;
 	float t = 0.0f;
@@ -125,4 +124,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	}
 	core.flushGraphicsQueue();
 
+	// 清理对齐分配的内存
+	if (animatedInstance)
+	{
+		animatedInstance->~AnimationInstance();
+		_aligned_free(animatedInstance);
+	}
 }

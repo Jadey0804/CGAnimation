@@ -133,15 +133,17 @@ public:
 class AnimationInstance
 {
 public:
-	Animation* animation;
+	Animation* animation = nullptr;  // ???? nullptr
 	std::string usingAnimation;
-	float t;
+	float t = 0.0f;  // ???
 	Matrix matrices[256]; // This is defined as 256 to match the maximum number in the shader
 	Matrix matricesPose[256]; // This is to store transforms needed for finding bone positions
 	Matrix coordTransform;
 	void init(Animation* _animation, int fromYZX)
 	{
 		animation = _animation;
+		t = 0.0f;
+		usingAnimation = "";
 		if (fromYZX == 1)
 		{
 			memset(coordTransform.a, 0, 16 * sizeof(float));
@@ -153,6 +155,8 @@ public:
 	}
 	void update(std::string name, float dt)
 	{
+		if (!animation) return;  // ???????
+		
 		if (name == usingAnimation)
 		{
 			t += dt;
@@ -180,6 +184,11 @@ public:
 	}
 	bool animationFinished()
 	{
+		// ??????????????
+		if (!animation) return true;
+		if (usingAnimation.empty()) return true;
+		if (animation->animations.find(usingAnimation) == animation->animations.end()) return true;
+		
 		if (t > animation->animations[usingAnimation].duration())
 		{
 			return true;

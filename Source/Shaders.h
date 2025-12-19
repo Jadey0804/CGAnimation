@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -164,14 +164,32 @@ public:
 	//heapoffst-bindpoint??????
 	void updateTexturePS(Core* core, const std::string& textureName, int heapOffset)
 	{
+		//auto it = textureBindPoints.find(textureName);
+		//if (it != textureBindPoints.end())
+		//{
+		//	UINT bindPoint = it->second;
+		//	D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
+		//	handle.ptr += (UINT64)(heapOffset - bindPoint) * (UINT64)core->srvHeap.incrementSize;
+		//	core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
+		//}
+
 		auto it = textureBindPoints.find(textureName);
-		if (it != textureBindPoints.end())
+		if (it == textureBindPoints.end()) return;
+
+		int bindPoint = (int)it->second;
+		int tableBase = heapOffset - bindPoint;
+
+		// ✅ 关键：避免 heapOffset < bindPoint 时下溢导致 GPU 指针乱飞
+		if (tableBase < 0)
 		{
-			UINT bindPoint = it->second;
-			D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
-			handle.ptr += (UINT64)(heapOffset - bindPoint) * (UINT64)core->srvHeap.incrementSize;
-			core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
+			printf("updateTexturePS() invalid: texture=%s heapOffset=%d bindPoint=%d\n",
+				textureName.c_str(), heapOffset, bindPoint);
+			return;
 		}
+
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
+		handle.ptr += (UINT64)tableBase * (UINT64)core->srvHeap.incrementSize;
+		core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
 	}
 
 

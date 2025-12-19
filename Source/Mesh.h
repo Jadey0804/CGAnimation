@@ -41,12 +41,48 @@ public:
 class Mesh
 {
 public:
-	ID3D12Resource* vertexBuffer;
-	ID3D12Resource* indexBuffer;
+	ID3D12Resource* vertexBuffer = nullptr;
+	ID3D12Resource* indexBuffer = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW vbView;
 	D3D12_INDEX_BUFFER_VIEW ibView;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
-	unsigned int numMeshIndices;
+	unsigned int numMeshIndices = 0;
+
+	// ???????????
+	Mesh() = default;
+	Mesh(const Mesh&) = delete;
+	Mesh& operator=(const Mesh&) = delete;
+	
+	// ????
+	Mesh(Mesh&& other) noexcept
+		: vertexBuffer(other.vertexBuffer)
+		, indexBuffer(other.indexBuffer)
+		, vbView(other.vbView)
+		, ibView(other.ibView)
+		, inputLayoutDesc(other.inputLayoutDesc)
+		, numMeshIndices(other.numMeshIndices)
+	{
+		other.vertexBuffer = nullptr;
+		other.indexBuffer = nullptr;
+	}
+	
+	Mesh& operator=(Mesh&& other) noexcept
+	{
+		if (this != &other)
+		{
+			cleanUp();
+			vertexBuffer = other.vertexBuffer;
+			indexBuffer = other.indexBuffer;
+			vbView = other.vbView;
+			ibView = other.ibView;
+			inputLayoutDesc = other.inputLayoutDesc;
+			numMeshIndices = other.numMeshIndices;
+			other.vertexBuffer = nullptr;
+			other.indexBuffer = nullptr;
+		}
+		return *this;
+	}
+
 	void init(Core* core, void* vertices, int vertexSizeInBytes, int numVertices, unsigned int* indices, int numIndices)
 	{
 		D3D12_HEAP_PROPERTIES heapprops;
@@ -113,8 +149,16 @@ public:
 	}
 	void cleanUp()
 	{
-		indexBuffer->Release();
-		vertexBuffer->Release();
+		if (indexBuffer)
+		{
+			indexBuffer->Release();
+			indexBuffer = nullptr;
+		}
+		if (vertexBuffer)
+		{
+			vertexBuffer->Release();
+			vertexBuffer = nullptr;
+		}
 	}
 	~Mesh()
 	{

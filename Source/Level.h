@@ -10,6 +10,8 @@
 #include "Plane.h"
 #include "skybox.h"
 
+#include <malloc.h>  // for _aligned_malloc / _aligned_free
+
 class Core;
 class PSOManager;
 class Shaders;
@@ -44,6 +46,8 @@ public:
 
     void clear();
 
+    ~Level() { clear(); }
+
 private:
     Core* m_core = nullptr;
     PSOManager* m_psos = nullptr;
@@ -55,14 +59,18 @@ private:
     AnimatedModel* allocAlignedAnim();
     void freeAlignedAnim(AnimatedModel* p);
 
+    // 为 AnimationInstance 分配对齐内存
+    AnimationInstance* allocAlignedAnimInstance();
+    void freeAlignedAnimInstance(AnimationInstance* p);
 
     std::unordered_map<std::string, StaticModel*>   m_staticCache;
     std::unordered_map<std::string, AnimatedModel*> m_animCache;
 
+    // 改用指针存储 AnimationInstance，确保内存对齐
     struct AnimEntry
     {
         AnimatedModel* model = nullptr;
-        AnimationInstance instance;
+        AnimationInstance* instance = nullptr;  // 改为指针
         std::string animName;
         bool inited = false;
     };
