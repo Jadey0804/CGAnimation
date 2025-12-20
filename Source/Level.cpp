@@ -2,9 +2,6 @@
 #include <fstream>
 #include <sstream>
 
-// 你项目里用到的：Shaders::updateConstantVS(...) 在 Game.cpp 里已存在 :contentReference[oaicite:3]{index=3}
-
-//#include <new>// for std::align_val_t
 #include <malloc.h>   // _aligned_malloc / _aligned_free
 
 
@@ -34,6 +31,10 @@ void Level::init(Core* core, PSOManager* psos, Shaders* shaders, TextureManager*
     m_textures = textures;
     m_plane = plane;
     m_skybox = skybox;
+
+    // 初始化草地系统
+    m_grass = new Grass();
+    m_grass->init(core, psos, shaders, textures);
 }
 
 void Level::clear()
@@ -47,6 +48,12 @@ void Level::clear()
 
     m_staticCache.clear();
     m_animCache.clear();
+
+    // 清理草地
+    if (m_grass)
+    {
+        m_grass->clear();
+    }
 }
 
 StaticModel* Level::getOrLoadStatic(const std::string& path)
@@ -55,7 +62,6 @@ StaticModel* Level::getOrLoadStatic(const std::string& path)
     if (it != m_staticCache.end()) return it->second;
 
     auto* m = new StaticModel();
-    // StaticModel::load(Core*, std::string, Shaders*, PSOManager*) :contentReference[oaicite:4]{index=4}
     m->load(m_core, path, m_shaders, m_psos);
     m_staticCache[path] = m;
     return m;
@@ -69,15 +75,12 @@ AnimatedModel* Level::getOrLoadAnim(const std::string& path)
     auto* m = allocAlignedAnim();
     m->load(m_core, path, m_psos, m_shaders);
 
-    // ——对齐你在 Game.cpp 里对 TRex 贴图的“手动指定 + 预加载”逻辑 :contentReference[oaicite:6]{index=6}
-    // 如果该模型有 mesh 但贴图名没填，就全部指定为你当前使用的贴图：
     if (!m->textureFilenames.empty())
     {
         for (auto& s : m->textureFilenames)
         {
             if (s.empty())
                 s = "Models/Textures/T-rex_Base_Color_alb.png";
-            // 预加载纹理索引（你的 TextureManager 有 getTextureIndex 用法） :contentReference[oaicite:7]{index=7}
             m_textures->getTextureIndex(s);
         }
     }
@@ -94,6 +97,12 @@ bool Level::loadFromFile(const std::string& levelPath)
     m_objects.clear();
     m_objectToAnimIndex.clear();
     m_animEntries.clear();
+
+    // 清理旧的草地实例
+    if (m_grass)
+    {
+        m_grass->clear();
+    }
 
     std::string line;
     while (std::getline(f, line))
@@ -112,7 +121,6 @@ bool Level::loadFromFile(const std::string& levelPath)
             AnimEntry e;
             e.model = getOrLoadAnim(obj.modelPath);
 
-            // animName：优先用文件里的；没有就用模型里的第一个动画
             if (!obj.animName.empty())
             {
                 e.animName = obj.animName;
@@ -126,12 +134,22 @@ bool Level::loadFromFile(const std::string& levelPath)
                 e.animName = "";
             }
 
-            // AnimationInstance::init(Animation*, int) :contentReference[oaicite:8]{index=8}
             e.instance.init(&e.model->animation, 0);
             e.inited = true;
 
             animIndex = (int)m_animEntries.size();
             m_animEntries.push_back(std::move(e));
+        }
+        else if (obj.type == LevelObjType::Grass)
+        {
+            // 在指定位置散布草地
+            if (m_grass)
+            {
+                m_grass->scatterGrass(obj.pos, obj.grassRadius, obj.grassCount,
+                                      obj.scale.x, obj.scale.y);  // scale.x=minScale, scale.y=maxScale
+            }
+            // GRASS 类型不加入 m_objects，直接处理
+            continue;
         }
 
         m_objects.push_back(std::move(obj));
@@ -148,10 +166,8 @@ void Level::update(float dt)
         if (!e.inited) continue;
         if (e.animName.empty()) continue;
 
-        // 保护：动画名不存在则不更新
         if (!e.model->animation.hasAnimation(e.animName)) continue;
 
-        // AnimationInstance::update(name, dt) :contentReference[oaicite:9]{index=9}
         e.instance.update(e.animName, dt);
 
         if (e.instance.animationFinished())
@@ -161,13 +177,13 @@ void Level::update(float dt)
     }
 }
 
-void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
+void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos,
+                 const Vec3& cameraRight, const Vec3& cameraUp)
 {
-    // 你 Game.cpp 里会更新 StaticModelUntextured / AnimatedTextured 的 VP 常量 :contentReference[oaicite:10]{index=10}
     m_shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
     m_shaders->updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 
-    // 先画 plane（接口：Plane::draw(Core*,PSOManager*,Shaders*,TextureManager*,Matrix)）
+    // 先画 plane
     if (m_plane)
     {
         m_plane->draw(m_core, m_psos, m_shaders, m_textures, vp);
@@ -182,7 +198,6 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
         {
             StaticModel* m = getOrLoadStatic(o.modelPath);
             Matrix W = buildWorld(o);
-            // updateWorld(Shaders*, Matrix&) + draw(Core*,PSOManager*,Shaders*,Matrix&) :contentReference[oaicite:12]{index=12}
             m->updateWorld(m_shaders, W);
             m->draw(m_core, m_psos, m_shaders, vp);
         }
@@ -194,16 +209,21 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
             AnimEntry& e = m_animEntries[idx];
             Matrix W = buildWorld(o);
 
-            // AnimatedModel::draw(Core*,PSOManager*,Shaders*,TextureManager*,AnimationInstance*,Matrix&,Matrix&) :contentReference[oaicite:13]{index=13}
             e.model->draw(m_core, m_psos, m_shaders, m_textures, &e.instance, vp, W);
         }
     }
 
-    // 最后画 skybox：W=translation(cameraPos), VP=无平移的 skyVP
+    // 画草地（在其他物体之后，skybox之前）
+    if (m_grass)
+    {
+        m_grass->draw(m_core, m_psos, m_shaders, m_textures, vp, cameraPos, cameraRight, cameraUp);
+    }
+
+    // 最后画 skybox
     if (m_skybox)
     {
         Matrix W = Matrix::translation(cameraPos);
-        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP); //:contentReference[oaicite:14]{ index = 14 }
+        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP);
     }
 }
 
@@ -212,12 +232,10 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
     std::string s = line;
     if (s.empty()) return false;
 
-    // 跳过空白行
     bool allSpace = true;
     for (char c : s) { if (!isspace((unsigned char)c)) { allSpace = false; break; } }
     if (allSpace) return false;
 
-    // 跳过注释
     size_t first = s.find_first_not_of(" \t\r\n");
     if (first == std::string::npos) return false;
     if (s[first] == '#') return false;
@@ -234,10 +252,20 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
             if (t == "ANIM")   return LevelObjType::Anim;
             if (t == "PLANE")  return LevelObjType::Plane;
             if (t == "SKYBOX") return LevelObjType::Skybox;
+            if (t == "GRASS")  return LevelObjType::Grass;
             return LevelObjType::Static;
         };
 
     outObj.type = toType(type);
+
+    if (outObj.type == LevelObjType::Grass)
+    {
+        // GRASS 格式: GRASS px py pz count radius minScale maxScale
+        iss >> outObj.pos.x >> outObj.pos.y >> outObj.pos.z;
+        iss >> outObj.grassCount >> outObj.grassRadius;
+        iss >> outObj.scale.x >> outObj.scale.y;  // minScale, maxScale
+        return true;
+    }
 
     // 统一格式：
     // type model px py pz sx sy sz rx ry rz [animName]
@@ -248,7 +276,7 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
 
     if (outObj.type == LevelObjType::Anim)
     {
-        iss >> outObj.animName; // 可选
+        iss >> outObj.animName;
     }
 
     return true;

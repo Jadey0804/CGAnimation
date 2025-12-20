@@ -9,13 +9,14 @@
 #include "Animation.h"
 #include "Plane.h"
 #include "skybox.h"
+#include "Grass/Grass.h"
 
 class Core;
 class PSOManager;
 class Shaders;
 class TextureManager;
 
-enum class LevelObjType { Static, Anim, Plane, Skybox };
+enum class LevelObjType { Static, Anim, Plane, Skybox, Grass };
 
 struct LevelObject
 {
@@ -26,6 +27,10 @@ struct LevelObject
     Vec3 pos{ 0,0,0 };
     Vec3 scale{ 1,1,1 };
     Vec3 rotDeg{ 0,0,0 };
+
+    // GRASS 专用
+    int grassCount = 100;      // 草的数量
+    float grassRadius = 5.0f;  // 散布半径（恢复默认值）
 };
 
 class Level
@@ -40,7 +45,9 @@ public:
 
     // vp：正常场景 VP（含平移）
     // skyVP：天空盒 VP（view 去掉平移）
-    void draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos);
+    // cameraRight/cameraUp：用于草地billboard
+    void draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos,
+              const Vec3& cameraRight, const Vec3& cameraUp);
 
     void clear();
 
@@ -51,6 +58,7 @@ private:
     TextureManager* m_textures = nullptr;
     Plane* m_plane = nullptr;
     Skybox* m_skybox = nullptr;
+    Grass* m_grass = nullptr;  // 草地系统
 
     AnimatedModel* allocAlignedAnim();
     void freeAlignedAnim(AnimatedModel* p);

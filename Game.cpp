@@ -110,15 +110,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Matrix skyV = v.removeTranslation();
 		Matrix skyVP = skyV * p;
 
+		// 获取相机方向向量（用于草地billboard）
+		Vec3 cameraRight = fpscamera.getRightVector();
+		Vec3 cameraUp = Vec3(0, 1, 0);  // 草片保持垂直
+
 		// ✅ 一定要先开始 RenderPass，再画任何东西
 		core.beginRenderPass();
 
 		// ✅ 更新动画
 		level.update(dt);
 
-		// ✅ 画整个关卡（plane / static / anim / skybox）
-		// time 我建议传 t（累计时间），不要传 dt
-		level.draw(vp, skyVP, t, fpscamera.position);
+		// ✅ 画整个关卡（plane / static / anim / grass / skybox）
+		level.draw(vp, skyVP, t, fpscamera.position, cameraRight, cameraUp);
 
 		core.finishFrame();
 	}
