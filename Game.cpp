@@ -1,6 +1,4 @@
-﻿
-
-#include "Core.h"
+﻿#include "Core.h"
 #include "Window.h"
 #include "Timer.h"
 #include "Maths.h"
@@ -47,14 +45,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Shaders shaders;
 	PSOManager psos;
 
+	TextureManager textureManager;
+	textureManager.init(&core);
+
 	Plane plane;
-	plane.init(&core, &psos, &shaders);
+	plane.init(&core, &psos, &shaders, &textureManager);
 
 	StaticModel staticModel;
 	staticModel.load(&core, "Models/acacia_003.gem", &shaders, &psos);
 
-	TextureManager textureManager;
-	textureManager.init(&core); // Re-enable textureManager initialization
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, "Models/TRex.gem", &psos, &shaders);
 
