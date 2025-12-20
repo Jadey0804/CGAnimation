@@ -15,7 +15,7 @@ struct PS_INPUT
 float4 PS(PS_INPUT input) : SV_Target0
 {
     // UV????????????????
-    float2 uv = input.TexCoords;
+    float2 uv = input.TexCoords*10.0;
     
     // ??????
     float4 albedo = colorTex.Sample(samplerLinear, uv);

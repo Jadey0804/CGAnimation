@@ -157,12 +157,14 @@
     <ClInclude Include="Source\Texture.h" />
     <ClInclude Include="Source\TextureManager.h" />
     <ClInclude Include="Source\Timer.h" />
+    <ClInclude Include="Source\Tree.h" />
     <ClInclude Include="Source\Vertex.h" />
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Models\acacia_003.gem" />
     <None Include="Models\TRex.gem" />
+    <None Include="Models\willow.gem" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Models\Textures\ground_with_rocks_01_color_1k.png" />
@@ -174,6 +176,9 @@
     <Image Include="Models\Textures\Textures1_ALB.png" />
     <Image Include="Models\Textures\Textures1_NH.png" />
     <Image Include="Models\Textures\Textures1_RMAX.png" />
+    <Image Include="Models\Textures\willow branch_ALB.png" />
+    <Image Include="Models\Textures\willow branch_NH.png" />
+    <Image Include="Models\Textures\willow branch_RMAX.png" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Levels\Level01.txt" />
@@ -184,6 +189,8 @@
     <Text Include="Source\ShaderFile\PSUntextured.txt" />
     <Text Include="Source\ShaderFile\SkyboxPS.txt" />
     <Text Include="Source\ShaderFile\SkyboxVS.txt" />
+    <Text Include="Source\ShaderFile\TreePS.txt" />
+    <Text Include="Source\ShaderFile\TreeVS.txt" />
     <Text Include="Source\ShaderFile\VSAnimTextured.txt" />
     <Text Include="Source\ShaderFile\VSTextured.txt" />
     <Text Include="Source\ShaderFile\VSUntextured.txt" />

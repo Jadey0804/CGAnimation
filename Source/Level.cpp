@@ -73,16 +73,16 @@ AnimatedModel* Level::getOrLoadAnim(const std::string& path)
 
     // ——对齐你在 Game.cpp 里对 TRex 贴图的“手动指定 + 预加载”逻辑 :contentReference[oaicite:6]{index=6}
     // 如果该模型有 mesh 但贴图名没填，就全部指定为你当前使用的贴图：
-    if (!m->textureFilenames.empty())
-    {
-        for (auto& s : m->textureFilenames)
-        {
-            if (s.empty())
-                s = "Models/Textures/T-rex_Base_Color_alb.png";
-            // 预加载纹理索引（你的 TextureManager 有 getTextureIndex 用法） :contentReference[oaicite:7]{index=7}
-            m_textures->getTextureIndex(s);
-        }
-    }
+    //if (!m->textureFilenames.empty())
+    //{
+    //    for (auto& s : m->textureFilenames)
+    //    {
+    //        if (s.empty())
+    //            s = "Models/Textures/T-rex_Base_Color_alb.png";
+    //        // 预加载纹理索引（你的 TextureManager 有 getTextureIndex 用法） :contentReference[oaicite:7]{index=7}
+    //        m_textures->getTextureIndex(s);
+    //    }
+    //}
 
     m_animCache[path] = m;
     return m;

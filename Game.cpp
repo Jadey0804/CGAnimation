@@ -13,6 +13,7 @@
 #include"FPSCamera.h"
 #include"skybox.h"
 #include"Level.h"
+#include"Tree.h"
 
 // Properties -> Linker -> System -> Windows
 
@@ -60,6 +61,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Skybox skybox;
 	skybox.init(&core, &psos, &shaders, &textureManager,5000,500,10000);
 
+	// 初始化柳树
+	Tree willowTree;
+	willowTree.init(&core, &shaders, &psos, &textureManager, "Models/willow.gem");
+	willowTree.setPosition(20, 0, 0);  // 放置在原点附近
+	willowTree.setScale(0.01f);         // 设置缩放
+	willowTree.setRotation(0.0f);      // 设置旋转角度
 
 	Level level;
 
@@ -67,14 +74,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	level.loadFromFile("Levels/Level01.txt");
 
 	//手动设置纹理路径
-	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
-	{
-		// 清空或设置默认路径
-		animatedModel.textureFilenames[i] = "Models/Textures/T-rex_Base_Color_alb.png";
-		// 或者根据网格部分设置不同的纹理
-		// if (i == 0) animatedModel.textureFilenames[i] = "Models/TRex_body.png";
-		// else if (i == 1) animatedModel.textureFilenames[i] = "Models/TRex_eyes.png";
-	}
+	//for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
+	//{
+	//	// 清空或设置默认路径
+	//	animatedModel.textureFilenames[i] = "Models/Textures/T-rex_Base_Color_alb.png";
+	//	// 或者根据网格部分设置不同的纹理
+	//	// if (i == 0) animatedModel.textureFilenames[i] = "Models/TRex_body.png";
+	//	// else if (i == 1) animatedModel.textureFilenames[i] = "Models/TRex_eyes.png";
+	//}
 
 	// 然后确保纹理被加载
 	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
@@ -116,6 +123,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		level.update(dt);
 
 		level.draw(vp, skyVP, t, fpscamera.position);
+
+		// 绘制柳树
+		willowTree.draw(&core, &psos, &shaders, vp);
 
 		core.finishFrame();
 	}

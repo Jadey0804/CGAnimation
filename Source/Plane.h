@@ -16,10 +16,10 @@ public:
 	void init(Core* core, PSOManager* psos, Shaders* shaders, TextureManager* textureManager)
 	{
 		std::vector<STATIC_VERTEX> vertices;
-		vertices.push_back(addVertex(Vec3(-0.5, 0, -0.5), Vec3(0, 1, 0), 0, 0));
-		vertices.push_back(addVertex(Vec3(0.5, 0, -0.5), Vec3(0, 1, 0), 1, 0));
-		vertices.push_back(addVertex(Vec3(-0.5, 0, 0.5), Vec3(0, 1, 0), 0, 1));
-		vertices.push_back(addVertex(Vec3(0.5, 0, 0.5), Vec3(0, 1, 0), 1, 1));
+		vertices.push_back(addVertex(Vec3(-50.0, 0, -50.0), Vec3(0, 1, 0), 0, 0));
+		vertices.push_back(addVertex(Vec3(50.0, 0, -50.0), Vec3(0, 1, 0), 1, 0));
+		vertices.push_back(addVertex(Vec3(-50.0, 0, 50.0), Vec3(0, 1, 0), 0, 1));
+		vertices.push_back(addVertex(Vec3(50.0, 0, 50.0), Vec3(0, 1, 0), 1, 1));
 		std::vector<unsigned int> indices;
 		indices.push_back(0);
 		indices.push_back(1);
