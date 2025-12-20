@@ -32,6 +32,7 @@ public:
 		shaders->load(core, "StaticModelUntextured", "Source/ShaderFile/VSUntextured.txt", "Source/ShaderFile/PSUntextured.txt");
 		psos->createPSO(core, "StaticModelPSO", shaders->find("StaticModelUntextured")->vs, shaders->find("StaticModelUntextured")->ps, VertexLayoutCache::getStaticLayout());
 	}
+
 	void updateWorld(Shaders* shaders, Matrix& w)
 	{
 		shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "W", &w);

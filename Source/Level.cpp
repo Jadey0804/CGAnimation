@@ -52,7 +52,9 @@ void Level::clear()
 StaticModel* Level::getOrLoadStatic(const std::string& path)
 {
     auto it = m_staticCache.find(path);
-    if (it != m_staticCache.end()) return it->second;
+    if (it != m_staticCache.end()) {
+        return it->second;
+    }
 
     auto* m = new StaticModel();
     // StaticModel::load(Core*, std::string, Shaders*, PSOManager*) :contentReference[oaicite:4]{index=4}
@@ -96,9 +98,11 @@ bool Level::loadFromFile(const std::string& levelPath)
     m_animEntries.clear();
 
     std::string line;
-    while (std::getline(f, line))
-    {
+    while (std::getline(f, line)) {
         LevelObject obj;
+
+		if (line.find("#") != std::string::npos || line.empty()) continue;
+
         if (!parseLine(line, obj)) continue;
 
         int animIndex = -1;
@@ -167,10 +171,10 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
     m_shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
     m_shaders->updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 
-    // 先画 plane（接口：Plane::draw(Core*,PSOManager*,Shaders*,Matrix)） :contentReference[oaicite:11]{index=11}
+    // 先画 plane（接口：Plane::draw(Core*,PSOManager*,Shaders*,TextureManager*,Matrix)）
     if (m_plane)
     {
-        m_plane->draw(m_core, m_psos, m_shaders, vp);
+        m_plane->draw(m_core, m_psos, m_shaders, m_textures, vp);
     }
 
     // 再画静态/动画对象

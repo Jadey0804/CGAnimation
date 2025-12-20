@@ -1,6 +1,4 @@
-﻿
-
-#include "Core.h"
+﻿#include "Core.h"
 #include "Window.h"
 #include "Timer.h"
 #include "Maths.h"
@@ -47,14 +45,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Shaders shaders;
 	PSOManager psos;
 
+	TextureManager textureManager;
+	textureManager.init(&core);
+
 	Plane plane;
-	plane.init(&core, &psos, &shaders);
+	plane.init(&core, &psos, &shaders, &textureManager);
 
 	StaticModel staticModel;
 	staticModel.load(&core, "Models/acacia_003.gem", &shaders, &psos);
 
-	TextureManager textureManager;
-	textureManager.init(&core); // Re-enable textureManager initialization
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, "Models/TRex.gem", &psos, &shaders);
 
@@ -111,14 +110,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Matrix skyV = v.removeTranslation();
 		Matrix skyVP = skyV * p;
 
-		// ✅ 一定要先开始 RenderPass，再画任何东西
+		
 		core.beginRenderPass();
 
-		// ✅ 更新动画
 		level.update(dt);
 
-		// ✅ 画整个关卡（plane / static / anim / skybox）
-		// time 我建议传 t（累计时间），不要传 dt
 		level.draw(vp, skyVP, t, fpscamera.position);
 
 		core.finishFrame();
