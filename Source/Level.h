@@ -30,7 +30,7 @@ struct LevelObject
 
     // GRASS 专用
     int grassCount = 100;      // 草的数量
-    float grassRadius = 5.0f;  // 散布半径（恢复默认值）
+    float grassRadius = 5.0f;  // 散布半径
 };
 
 class Level

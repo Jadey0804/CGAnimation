@@ -1,8 +1,13 @@
-﻿# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
+﻿
+# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
 STATIC  Models/acacia_003.gem          10 0 0     0.01 0.01 0.01  0 0 0
 STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01  0 45 0
 ANIM    Models/TRex.gem                 0 0 0     0.01 0.01 0.01  0 180 0  run
 
 # GRASS 格式: GRASS px py pz count radius minScale maxScale
-# 减少草的数量，避免常量缓冲区溢出
-GRASS   0 0 0   200 50.0   0.8 1.2
+# 在原点附近散布100棵草，半径5，缩放范围0.8-1.2
+GRASS   0 0 0   100 5.0   0.8 1.2
+
+# 在树附近也添加一些草
+GRASS   10 0 0  50 3.0   0.6 1.0
+GRASS   5 0 0   50 3.0   0.6 1.0
