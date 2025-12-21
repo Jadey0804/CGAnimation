@@ -113,6 +113,54 @@ bool Level::loadFromFile(const std::string& levelPath)
             // AnimationInstance::init(Animation*, int)
             e.instance.init(&e.model->animation, 0);
             e.inited = true;
+            
+            // AABB 碰撞检测：初始化状态
+            e.isColliding = false;
+            
+            // 自动检测 idle 和 run 动画名称
+            e.idleAnimName = "";
+            e.runAnimName = "";
+            for (auto& animPair : e.model->animation.animations)
+            {
+                std::string name = animPair.first;
+                // 转小写比较
+                std::string lower = name;
+                for (auto& c : lower) c = tolower(c);
+                
+                if (lower.find("idle") != std::string::npos)
+                {
+                    e.idleAnimName = name;
+                }
+                else if (lower.find("run") != std::string::npos || lower.find("walk") != std::string::npos)
+                {
+                    e.runAnimName = name;
+                }
+            }
+            
+            // 如果没找到 idle，使用当前动画
+            if (e.idleAnimName.empty())
+            {
+                e.idleAnimName = e.animName;
+            }
+            // 如果没找到 run，使用第二个动画（如果有）
+            if (e.runAnimName.empty())
+            {
+                int count = 0;
+                for (auto& animPair : e.model->animation.animations)
+                {
+                    if (count == 1)
+                    {
+                        e.runAnimName = animPair.first;
+                        break;
+                    }
+                    count++;
+                }
+                // 如果只有一个动画，run 也用同一个
+                if (e.runAnimName.empty())
+                {
+                    e.runAnimName = e.idleAnimName;
+                }
+            }
 
             animIndex = (int)m_animEntries.size();
             m_animEntries.push_back(std::move(e));
@@ -125,8 +173,46 @@ bool Level::loadFromFile(const std::string& levelPath)
     return true;
 }
 
-void Level::update(float dt)
+void Level::update(float dt, const Vec3& cameraPos)
 {
+    // 玩家 AABB：以相机位置为中心，半尺寸 0.5
+    Vec3 playerHalfSize(0.5f, 1.0f, 0.5f);
+    AABB playerAABB = MakePlayerAABB(cameraPos, playerHalfSize);
+    
+    for (size_t i = 0; i < m_objects.size(); i++)
+    {
+        const LevelObject& o = m_objects[i];
+        int animIdx = m_objectToAnimIndex[i];
+        
+        if (o.type != LevelObjType::Anim || animIdx < 0)
+            continue;
+            
+        AnimEntry& e = m_animEntries[animIdx];
+        if (!e.inited) continue;
+        
+        // 计算动物的世界空间 AABB
+        Matrix W = buildWorld(o);
+        AABB animalWorldAABB = TransformAABB(e.model->localAABB, W);
+        
+        // 检测碰撞
+        bool nowColliding = Intersects(playerAABB, animalWorldAABB);
+        
+        // 状态变化时切换动画
+        if (nowColliding && !e.isColliding)
+        {
+            // 刚进入碰撞：切换到 run 动画
+            e.animName = e.runAnimName;
+            e.isColliding = true;
+        }
+        else if (!nowColliding && e.isColliding)
+        {
+            // 刚离开碰撞：切换回 idle 动画
+            e.animName = e.idleAnimName;
+            e.isColliding = false;
+        }
+    }
+    
+    // 更新所有动画
     for (auto& e : m_animEntries)
     {
         if (!e.inited) continue;

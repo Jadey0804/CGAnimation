@@ -47,6 +47,10 @@ public:
 	D3D12_INDEX_BUFFER_VIEW ibView;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	unsigned int numMeshIndices;
+	
+	// AABB ????????????
+	AABB localAABB;
+
 	void init(Core* core, void* vertices, int vertexSizeInBytes, int numVertices, unsigned int* indices, int numIndices)
 	{
 		D3D12_HEAP_PROPERTIES heapprops;
@@ -98,11 +102,25 @@ public:
 	{
 		init(core, &vertices[0], sizeof(STATIC_VERTEX), vertices.size(), &indices[0], indices.size());
 		inputLayoutDesc = VertexLayoutCache::getStaticLayout();
+		
+		// ?? localAABB????? position
+		localAABB.reset();
+		for (size_t i = 0; i < vertices.size(); i++)
+		{
+			localAABB.expand(vertices[i].pos);
+		}
 	}
 	void init(Core* core, std::vector<ANIMATED_VERTEX> vertices, std::vector<unsigned int> indices)
 	{
 		init(core, &vertices[0], sizeof(ANIMATED_VERTEX), vertices.size(), &indices[0], indices.size());
 		inputLayoutDesc = VertexLayoutCache::getAnimatedLayout();
+		
+		// ?? localAABB????? position
+		localAABB.reset();
+		for (size_t i = 0; i < vertices.size(); i++)
+		{
+			localAABB.expand(vertices[i].pos);
+		}
 	}
 	void draw(Core* core)
 	{

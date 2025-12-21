@@ -135,7 +135,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		
 		core.beginRenderPass();
 
-		level.update(dt);
+		level.update(dt, fpscamera.position);  // 传入相机位置用于碰撞检测
 
 		level.draw(vp, skyVP, t, fpscamera.position);
 

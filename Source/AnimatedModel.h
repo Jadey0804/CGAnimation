@@ -15,6 +15,9 @@ public:
 	std::vector<Mesh*> meshes;
 	Animation animation;
 	std::vector<std::string> textureFilenames;
+	
+	// AABB 碰撞检测：合并所有 mesh 的本地空间包围盒
+	AABB localAABB;
 
 	//// 标准化纹理路径
 	//static std::string normalizePath(const std::string& texPath)
@@ -49,6 +52,9 @@ public:
 		GEMLoader::GEMAnimation gemanimation;
 		loader.load(filename, gemmeshes, gemanimation);
 		
+		// 初始化 localAABB
+		localAABB.reset();
+		
 		for (int i = 0; i < gemmeshes.size(); i++)
 		{
 			Mesh* mesh = new Mesh();
@@ -61,6 +67,10 @@ public:
 			}
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
+			
+			// 合并每个 mesh 的 localAABB
+			localAABB.expand(mesh->localAABB.min);
+			localAABB.expand(mesh->localAABB.max);
 
 			// 从材质中加载纹理路径并标准化
 			std::string texFilename = gemmeshes[i].material.find("albedo").getValue();

@@ -36,7 +36,7 @@ public:
 
     bool loadFromFile(const std::string& levelPath);
 
-    void update(float dt);
+    void update(float dt, const Vec3& cameraPos);  // 修改：添加 cameraPos 参数
 
     void draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos);
 
@@ -63,6 +63,11 @@ private:
         AnimationInstance instance;
         std::string animName;
         bool inited = false;
+        
+        // AABB 碰撞检测：状态变量，避免每帧重复重置动画
+        bool isColliding = false;
+        std::string idleAnimName;  // idle 动画名
+        std::string runAnimName;   // run 动画名
     };
 
     std::vector<LevelObject> m_objects;

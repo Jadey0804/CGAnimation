@@ -552,3 +552,68 @@ inline Vec3 sphericalToVector(const float theta, const float phi)
 	float st = sqrtf(1.0f - (ct * ct));
 	return Vec3(sinf(phi) * st, ct, cosf(phi) * st);
 }
+
+// ==================== AABB 碰撞检测 ====================
+
+struct AABB
+{
+	Vec3 min;
+	Vec3 max;
+
+	AABB() : min(0, 0, 0), max(0, 0, 0) {}
+	AABB(const Vec3& _min, const Vec3& _max) : min(_min), max(_max) {}
+
+	// 扩展 AABB 以包含一个点
+	void expand(const Vec3& point)
+	{
+		min = Min(min, point);
+		max = Max(max, point);
+	}
+
+	// 初始化为无效状态（用于开始遍历顶点）
+	void reset()
+	{
+		min = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+		max = Vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	}
+};
+
+// AABB 相交检测
+inline bool Intersects(const AABB& a, const AABB& b)
+{
+	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
+	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+	if (a.max.z < b.min.z || a.min.z > b.max.z) return false;
+	return true;
+}
+
+// 从相机位置创建玩家 AABB
+inline AABB MakePlayerAABB(const Vec3& cameraPos, const Vec3& halfSize)
+{
+	return AABB(cameraPos - halfSize, cameraPos + halfSize);
+}
+
+// 用 8 角点法变换 localAABB 到世界空间
+inline AABB TransformAABB(const AABB& localAABB, Matrix& worldMatrix)
+{
+	// 计算 8 个角点
+	Vec3 corners[8];
+	corners[0] = Vec3(localAABB.min.x, localAABB.min.y, localAABB.min.z);
+	corners[1] = Vec3(localAABB.max.x, localAABB.min.y, localAABB.min.z);
+	corners[2] = Vec3(localAABB.min.x, localAABB.max.y, localAABB.min.z);
+	corners[3] = Vec3(localAABB.max.x, localAABB.max.y, localAABB.min.z);
+	corners[4] = Vec3(localAABB.min.x, localAABB.min.y, localAABB.max.z);
+	corners[5] = Vec3(localAABB.max.x, localAABB.min.y, localAABB.max.z);
+	corners[6] = Vec3(localAABB.min.x, localAABB.max.y, localAABB.max.z);
+	corners[7] = Vec3(localAABB.max.x, localAABB.max.y, localAABB.max.z);
+
+	// 变换所有角点并重新计算 AABB
+	AABB result;
+	result.reset();
+	for (int i = 0; i < 8; i++)
+	{
+		Vec3 transformed = worldMatrix.mulPoint(corners[i]);
+		result.expand(transformed);
+	}
+	return result;
+}
