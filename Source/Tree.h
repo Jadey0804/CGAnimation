@@ -15,20 +15,21 @@ class Tree
 public:
     std::vector<Mesh*> meshes;
     std::vector<std::string> textureFilenames;
+    std::vector<std::string> normalFilenames;
     std::vector<int> textureIndices;
+    std::vector<int> normalIndices;
+    std::vector<bool> isBark;  // 标记是否是树干部分
     TextureManager* textureManager;
     Matrix worldMatrix;
     Vec3 position;
     float scale;
     float rotation;
-	//std::string modelPath = "Models/willow.gem";
 
     Tree()
     {
         position = Vec3(0, 0, 0);
         scale = 1.0f;
         rotation = 0.0f;
-        // Matrix默认构造函数已经调用identity()
         textureManager = nullptr;
     }
 
@@ -48,6 +49,12 @@ public:
         std::vector<GEMLoader::GEMMesh> gemmeshes;
         loader.load(modelPath, gemmeshes);
 
+        // 预加载所有纹理
+        int barkTexIdx = textureManager->getTextureIndex("Models/Textures/bark02_ALB.png");
+        int barkNormalIdx = textureManager->getTextureIndex("Models/Textures/bark02_NH.png");
+        int leafTexIdx = textureManager->getTextureIndex("Models/Textures/willow branch_ALB.png");
+        int leafNormalIdx = textureManager->getTextureIndex("Models/Textures/willow branch_NH.png");
+
         for (size_t i = 0; i < gemmeshes.size(); i++)
         {
             Mesh* mesh = new Mesh();
@@ -63,19 +70,51 @@ public:
             mesh->init(core, vertices, gemmeshes[i].indices);
             meshes.push_back(mesh);
 
-            // 获取纹理文件名
-            std::string texName = gemmeshes[i].material.find("diffuse").getValue("");
-            textureFilenames.push_back(texName);
+            // 检查材质名称来判断是树干还是树叶
+            std::string materialName = gemmeshes[i].material.find("name").getValue("");
+            std::string diffuseTex = gemmeshes[i].material.find("diffuse").getValue("");
+            
+            // 调试输出材质信息
+            printf("Mesh %zu: material name = '%s', diffuse = '%s'\n", i, materialName.c_str(), diffuseTex.c_str());
 
-            // 加载纹理
-            if (!texName.empty())
+            // 判断是否是树干（通过材质名称或纹理名称包含 "bark" 来判断）
+            bool isBarkMesh = false;
+            if (materialName.find("bark") != std::string::npos || 
+                materialName.find("Bark") != std::string::npos ||
+                materialName.find("trunk") != std::string::npos ||
+                materialName.find("Trunk") != std::string::npos ||
+                diffuseTex.find("bark") != std::string::npos ||
+                diffuseTex.find("Bark") != std::string::npos)
             {
-                int texIdx = textureManager->getTextureIndex(texName);
-                textureIndices.push_back(texIdx);
+                isBarkMesh = true;
+            }
+            
+            // 如果模型只有一个网格或者无法通过材质名判断，使用网格索引
+            // 通常树模型中，索引0是树干，索引1是树叶
+            if (gemmeshes.size() == 2 && materialName.empty() && diffuseTex.empty())
+            {
+                isBarkMesh = (i == 0);  // 假设第一个网格是树干
+            }
+
+            isBark.push_back(isBarkMesh);
+
+            if (isBarkMesh)
+            {
+                // 树干使用树皮贴图
+                textureFilenames.push_back("Models/Textures/bark02_ALB.png");
+                textureIndices.push_back(barkTexIdx);
+                normalFilenames.push_back("Models/Textures/bark02_NH.png");
+                normalIndices.push_back(barkNormalIdx);
+                printf("  -> Using bark texture\n");
             }
             else
             {
-                textureIndices.push_back(-1);
+                // 树叶使用柳叶贴图
+                textureFilenames.push_back("Models/Textures/willow branch_ALB.png");
+                textureIndices.push_back(leafTexIdx);
+                normalFilenames.push_back("Models/Textures/willow branch_NH.png");
+                normalIndices.push_back(leafNormalIdx);
+                printf("  -> Using leaf texture\n");
             }
         }
 
@@ -199,10 +238,16 @@ public:
         // 绘制每个网格
         for (size_t i = 0; i < meshes.size(); i++)
         {
-            // 绑定纹理
+            // 绑定颜色纹理 (t0)
             if (textureIndices[i] >= 0)
             {
                 shaders->updateTexturePS(core, "TreeShader", "colorTex", textureIndices[i]);
+            }
+
+            // 绑定法线纹理 (t1)
+            if (normalIndices[i] >= 0)
+            {
+                shaders->updateTexturePS(core, "TreeShader", "normalTex", normalIndices[i]);
             }
 
             meshes[i]->draw(core);

@@ -167,6 +167,9 @@
     <None Include="Models\willow.gem" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Models\Textures\bark02_ALB.png" />
+    <Image Include="Models\Textures\bark02_NH.png" />
+    <Image Include="Models\Textures\bark02_RMAX.png" />
     <Image Include="Models\Textures\ground_with_rocks_01_color_1k.png" />
     <Image Include="Models\Textures\ground_with_rocks_01_normal_dx_1k.png" />
     <Image Include="Models\Textures\skyboxTexture.png" />

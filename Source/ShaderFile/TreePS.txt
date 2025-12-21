@@ -1,4 +1,5 @@
 Texture2D colorTex : register(t0);
+Texture2D normalTex : register(t1);
 SamplerState samplerLinear : register(s0);
 
 struct PS_INPUT
@@ -19,10 +20,22 @@ float4 PS(PS_INPUT input) : SV_Target0
     if (albedo.a < 0.5)
         discard;
     
-    // ???????
+    // ??????
+    float3 normalMap = normalTex.Sample(samplerLinear, input.TexCoords).rgb;
+    normalMap = normalMap * 2.0 - 1.0;
+    
+    // ??TBN??
     float3 N = normalize(input.Normal);
+    float3 T = normalize(input.Tangent);
+    float3 B = cross(N, T);
+    float3x3 TBN = float3x3(T, B, N);
+    
+    // ???????????????
+    float3 worldNormal = normalize(mul(normalMap, TBN));
+    
+    // ????
     float3 lightDir = normalize(float3(0.3, 1.0, 0.2));
-    float ndl = saturate(dot(N, lightDir));
+    float ndl = saturate(dot(worldNormal, lightDir));
     
     // ??? + ???
     float3 ambient = 0.3 * albedo.rgb;
