@@ -2,7 +2,11 @@ cbuffer staticMeshBuffer : register(b0)
 {
     float4x4 W;
     float4x4 VP;
-    float4 instanceOffsets[5];  // ????????
+    float4 instanceOffsets[5];  // ?????
+    float time;                  // ????????
+    float windStrength;          // ????
+    float windSpeed;             // ??
+    float leafThreshold;         // ??????
 };
 
 struct VS_INPUT
@@ -27,12 +31,34 @@ PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    // ??????????
+    // ???????
     float3 offset = instanceOffsets[input.InstanceID].xyz;
     
-    // ??????????
+    // ???????
     float4 offsetPos = input.Pos;
     offsetPos.xyz += offset;
+    
+    // ????? - ??????????????
+    float heightFactor = saturate((offsetPos.y - leafThreshold) / 50.0); // ????
+    
+    if (heightFactor > 0.0)
+    {
+        // ???????????????????????????
+        float phase = offsetPos.x * 0.1 + offsetPos.z * 0.1 + input.InstanceID * 1.5;
+        
+        // ??????X???
+        float windX = sin(time * windSpeed + phase) * windStrength * heightFactor;
+        
+        // ?????Z????????
+        float windZ = sin(time * windSpeed * 1.3 + phase * 0.7) * windStrength * 0.5 * heightFactor;
+        
+        // ??????
+        float windY = sin(time * windSpeed * 0.8 + phase * 1.2) * windStrength * 0.2 * heightFactor;
+        
+        offsetPos.x += windX;
+        offsetPos.y += windY;
+        offsetPos.z += windZ;
+    }
     
     float4 worldPos = mul(offsetPos, W);
     output.WorldPos = worldPos.xyz;

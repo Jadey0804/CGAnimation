@@ -30,6 +30,11 @@ public:
     float instanceOffsets[INSTANCE_COUNT * 4];
     bool useInstancing;  // 是否启用实例化
 
+    // 风动画参数
+    float windStrength;    // 风力强度
+    float windSpeed;       // 风速
+    float leafThreshold;   // 树叶高度阈值（低于此高度的顶点不受风影响）
+
     Tree()
     {
         position = Vec3(0, 0, 0);
@@ -37,6 +42,11 @@ public:
         rotation = 0.0f;
         textureManager = nullptr;
         useInstancing = false;  // 默认关闭实例化
+        
+        // 风动画默认参数
+        windStrength = 2.0f;     // 风力强度
+        windSpeed = 2.0f;        // 风速
+        leafThreshold = 30.0f;   // 树叶高度阈值
         
         // 初始化实例偏移量，X轴相隔10
         for (int i = 0; i < INSTANCE_COUNT; i++)
@@ -245,7 +255,30 @@ public:
         useInstancing = !useInstancing;
     }
 
-    void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp)
+    // 设置风动画参数
+    void setWindParameters(float strength, float speed, float threshold)
+    {
+        windStrength = strength;
+        windSpeed = speed;
+        leafThreshold = threshold;
+    }
+
+    void setWindStrength(float strength)
+    {
+        windStrength = strength;
+    }
+
+    void setWindSpeed(float speed)
+    {
+        windSpeed = speed;
+    }
+
+    void setLeafThreshold(float threshold)
+    {
+        leafThreshold = threshold;
+    }
+
+    void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp, float time)
     {
         // 设置VP矩阵
         shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "VP", &vp);
@@ -255,6 +288,12 @@ public:
         
         // 设置实例偏移量
         shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "instanceOffsets", instanceOffsets);
+
+        // 设置风动画参数
+        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "time", &time);
+        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windStrength", &windStrength);
+        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windSpeed", &windSpeed);
+        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "leafThreshold", &leafThreshold);
 
         // 绑定PSO
         psos->bind(core, "TreePSO");

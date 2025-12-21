@@ -139,8 +139,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		level.draw(vp, skyVP, t, fpscamera.position);
 
-		// 绘制柳树
-		willowTree.draw(&core, &psos, &shaders, vp);
+		// 绘制柳树（传递时间参数用于风动画）
+		willowTree.draw(&core, &psos, &shaders, vp, t);
 
 		core.finishFrame();
 	}
