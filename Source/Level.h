@@ -21,7 +21,7 @@ struct LevelObject
 {
     LevelObjType type = LevelObjType::Static;
     std::string modelPath;   // STATIC / ANIM
-    std::string animName;    // ANIM 可选：比如 run
+    std::string animName;    // ANIM 可选：动画名称
 
     Vec3 pos{ 0,0,0 };
     Vec3 scale{ 1,1,1 };
@@ -38,8 +38,6 @@ public:
 
     void update(float dt);
 
-    // vp：正常场景 VP（含平移）
-    // skyVP：天空盒 VP（view 去掉平移）
     void draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos);
 
     void clear();
@@ -68,7 +66,7 @@ private:
     };
 
     std::vector<LevelObject> m_objects;
-    std::vector<int> m_objectToAnimIndex; // 与 m_objects 同长度，非Anim为-1
+    std::vector<int> m_objectToAnimIndex;
     std::vector<AnimEntry> m_animEntries;
 
 private:

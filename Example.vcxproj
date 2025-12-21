@@ -163,6 +163,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Models\acacia_003.gem" />
+    <None Include="Models\Pig.gem" />
+    <None Include="Models\Sheep-01.gem" />
+    <None Include="Models\Sheep-03.gem" />
     <None Include="Models\TRex.gem" />
     <None Include="Models\willow.gem" />
   </ItemGroup>
@@ -185,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Levels\Level01.txt" />
+    <Text Include="Levels\Level02.txt" />
     <Text Include="Source\ShaderFile\PlaneTexturedPS.txt" />
     <Text Include="Source\ShaderFile\PlaneTexturedVS.txt" />
     <Text Include="Source\ShaderFile\PSAnimTextured.txt" />

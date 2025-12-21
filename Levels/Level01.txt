@@ -1,4 +1,9 @@
-﻿# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
-STATIC  Models/acacia_003.gem          10 0 0     0.01 0.01 0.01  0 0 0
-STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01  0 45 0
-ANIM    Models/TRex.gem                 0 0 0     0.01 0.01 0.01  0 180 0  run
+﻿# Level配置文件格式:
+# type model px py pz sx sy sz rx ry rz [animName]
+
+# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
+#STATIC  Models/acacia_003.gem          10 0 0     0.01 0.01 0.01  0 0 0
+#STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01  0 45 0
+ANIM    Models/Pig.gem                 0 0 0     0.01 0.01 0.01  0 180 0  idle
+ANIM    Models/Sheep-01.gem             3 0 3     0.01 0.01 0.01  0 90 0  idle
+ANIM    Models/TRex.gem            -3 0 3     0.01 0.01 0.01  0 270 0 idle

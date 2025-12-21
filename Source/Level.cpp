@@ -1,11 +1,7 @@
 ﻿#include "Level.h"
 #include <fstream>
 #include <sstream>
-
-// 你项目里用到的：Shaders::updateConstantVS(...) 在 Game.cpp 里已存在 :contentReference[oaicite:3]{index=3}
-
-//#include <new>// for std::align_val_t
-#include <malloc.h>   // _aligned_malloc / _aligned_free
+#include <malloc.h>
 
 
 AnimatedModel* Level::allocAlignedAnim()
@@ -21,9 +17,6 @@ void Level::freeAlignedAnim(AnimatedModel* p)
     p->~AnimatedModel();
     _aligned_free(p);
 }
-
-
-
 
 void Level::init(Core* core, PSOManager* psos, Shaders* shaders, TextureManager* textures,
     Plane* plane, Skybox* skybox)
@@ -57,7 +50,6 @@ StaticModel* Level::getOrLoadStatic(const std::string& path)
     }
 
     auto* m = new StaticModel();
-    // StaticModel::load(Core*, std::string, Shaders*, PSOManager*) :contentReference[oaicite:4]{index=4}
     m->load(m_core, path, m_shaders, m_psos);
     m_staticCache[path] = m;
     return m;
@@ -70,19 +62,7 @@ AnimatedModel* Level::getOrLoadAnim(const std::string& path)
 
     auto* m = allocAlignedAnim();
     m->load(m_core, path, m_psos, m_shaders);
-
-    // ——对齐你在 Game.cpp 里对 TRex 贴图的“手动指定 + 预加载”逻辑 :contentReference[oaicite:6]{index=6}
-    // 如果该模型有 mesh 但贴图名没填，就全部指定为你当前使用的贴图：
-    //if (!m->textureFilenames.empty())
-    //{
-    //    for (auto& s : m->textureFilenames)
-    //    {
-    //        if (s.empty())
-    //            s = "Models/Textures/T-rex_Base_Color_alb.png";
-    //        // 预加载纹理索引（你的 TextureManager 有 getTextureIndex 用法） :contentReference[oaicite:7]{index=7}
-    //        m_textures->getTextureIndex(s);
-    //    }
-    //}
+    m->preloadTextures(m_textures);
 
     m_animCache[path] = m;
     return m;
@@ -130,7 +110,7 @@ bool Level::loadFromFile(const std::string& levelPath)
                 e.animName = "";
             }
 
-            // AnimationInstance::init(Animation*, int) :contentReference[oaicite:8]{index=8}
+            // AnimationInstance::init(Animation*, int)
             e.instance.init(&e.model->animation, 0);
             e.inited = true;
 
@@ -155,7 +135,7 @@ void Level::update(float dt)
         // 保护：动画名不存在则不更新
         if (!e.model->animation.hasAnimation(e.animName)) continue;
 
-        // AnimationInstance::update(name, dt) :contentReference[oaicite:9]{index=9}
+        // AnimationInstance::update(name, dt)
         e.instance.update(e.animName, dt);
 
         if (e.instance.animationFinished())
@@ -167,7 +147,7 @@ void Level::update(float dt)
 
 void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
 {
-    // 你 Game.cpp 里会更新 StaticModelUntextured / AnimatedTextured 的 VP 常量 :contentReference[oaicite:10]{index=10}
+    // 你 Game.cpp 里会更新 StaticModelUntextured / AnimatedTextured 的 VP 常量
     m_shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
     m_shaders->updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 
@@ -186,7 +166,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
         {
             StaticModel* m = getOrLoadStatic(o.modelPath);
             Matrix W = buildWorld(o);
-            // updateWorld(Shaders*, Matrix&) + draw(Core*,PSOManager*,Shaders*,Matrix&) :contentReference[oaicite:12]{index=12}
+            // updateWorld(Shaders*, Matrix&) + draw(Core*,PSOManager*,Shaders*,Matrix&)
             m->updateWorld(m_shaders, W);
             m->draw(m_core, m_psos, m_shaders, vp);
         }
@@ -198,7 +178,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
             AnimEntry& e = m_animEntries[idx];
             Matrix W = buildWorld(o);
 
-            // AnimatedModel::draw(Core*,PSOManager*,Shaders*,TextureManager*,AnimationInstance*,Matrix&,Matrix&) :contentReference[oaicite:13]{index=13}
+            // AnimatedModel::draw(Core*,PSOManager*,Shaders*,TextureManager*,AnimationInstance*,Matrix&,Matrix&)
             e.model->draw(m_core, m_psos, m_shaders, m_textures, &e.instance, vp, W);
         }
     }
@@ -207,7 +187,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
     if (m_skybox)
     {
         Matrix W = Matrix::translation(cameraPos);
-        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP); //:contentReference[oaicite:14]{ index = 14 }
+        m_skybox->draw(m_core, m_psos, m_shaders, m_textures, time, &W, &skyVP);
     }
 }
 
@@ -243,8 +223,7 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
 
     outObj.type = toType(type);
 
-    // 统一格式：
-    // type model px py pz sx sy sz rx ry rz [animName]
+    // 格式: type model px py pz sx sy sz rx ry rz [animName]
     iss >> outObj.modelPath;
     iss >> outObj.pos.x >> outObj.pos.y >> outObj.pos.z;
     iss >> outObj.scale.x >> outObj.scale.y >> outObj.scale.z;
