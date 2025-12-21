@@ -97,6 +97,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 	Timer timer;
 	float t = 0.0f;
+	bool key1Pressed = false;  // 用于检测按键状态变化
 
 	while (1)
 	{
@@ -107,6 +108,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		window.checkInput();
 		if (window.keys[VK_ESCAPE] == 1) break;
+
+		// 按1键切换树的实例化
+		if (window.keys['1'] == 1)
+		{
+			if (!key1Pressed)
+			{
+				willowTree.toggleInstancing();
+				key1Pressed = true;
+			}
+		}
+		else
+		{
+			key1Pressed = false;
+		}
 
 		fpscamera.update(dt, &window);
 

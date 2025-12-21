@@ -18,12 +18,17 @@ public:
     std::vector<std::string> normalFilenames;
     std::vector<int> textureIndices;
     std::vector<int> normalIndices;
-    std::vector<bool> isBark;  // 标记是否是树干部分
+    std::vector<bool> isBark;
     TextureManager* textureManager;
     Matrix worldMatrix;
     Vec3 position;
     float scale;
     float rotation;
+    
+    // Instancing 相关
+    static const int INSTANCE_COUNT = 5;
+    float instanceOffsets[INSTANCE_COUNT * 4];
+    bool useInstancing;  // 是否启用实例化
 
     Tree()
     {
@@ -31,6 +36,16 @@ public:
         scale = 1.0f;
         rotation = 0.0f;
         textureManager = nullptr;
+        useInstancing = false;  // 默认关闭实例化
+        
+        // 初始化实例偏移量，X轴相隔10
+        for (int i = 0; i < INSTANCE_COUNT; i++)
+        {
+            instanceOffsets[i * 4 + 0] = i * 100.0f;  // X偏移
+            instanceOffsets[i * 4 + 1] = 0.0f;       // Y偏移
+            instanceOffsets[i * 4 + 2] = 0.0f;       // Z偏移
+            instanceOffsets[i * 4 + 3] = 0.0f;       // padding
+        }
     }
 
     void init(Core* core, Shaders* shaders, PSOManager* psos, TextureManager* texManager, 
@@ -41,7 +56,7 @@ public:
         // 加载着色器
         shaders->load(core, "TreeShader", "Source/ShaderFile/TreeVS.txt", "Source/ShaderFile/TreePS.txt");
         
-        // 创建PSO（用于带Alpha测试的渲染）
+        // 创建PSO
         createTreePSO(core, psos, shaders);
 
         // 加载模型
@@ -73,11 +88,7 @@ public:
             // 检查材质名称来判断是树干还是树叶
             std::string materialName = gemmeshes[i].material.find("name").getValue("");
             std::string diffuseTex = gemmeshes[i].material.find("diffuse").getValue("");
-            
-            // 调试输出材质信息
-            printf("Mesh %zu: material name = '%s', diffuse = '%s'\n", i, materialName.c_str(), diffuseTex.c_str());
 
-            // 判断是否是树干（通过材质名称或纹理名称包含 "bark" 来判断）
             bool isBarkMesh = false;
             if (materialName.find("bark") != std::string::npos || 
                 materialName.find("Bark") != std::string::npos ||
@@ -89,36 +100,29 @@ public:
                 isBarkMesh = true;
             }
             
-            // 如果模型只有一个网格或者无法通过材质名判断，使用网格索引
-            // 通常树模型中，索引0是树干，索引1是树叶
             if (gemmeshes.size() == 2 && materialName.empty() && diffuseTex.empty())
             {
-                isBarkMesh = (i == 0);  // 假设第一个网格是树干
+                isBarkMesh = (i == 0);
             }
 
             isBark.push_back(isBarkMesh);
 
             if (isBarkMesh)
             {
-                // 树干使用树皮贴图
                 textureFilenames.push_back("Models/Textures/bark02_ALB.png");
                 textureIndices.push_back(barkTexIdx);
                 normalFilenames.push_back("Models/Textures/bark02_NH.png");
                 normalIndices.push_back(barkNormalIdx);
-                printf("  -> Using bark texture\n");
             }
             else
             {
-                // 树叶使用柳叶贴图
                 textureFilenames.push_back("Models/Textures/willow branch_ALB.png");
                 textureIndices.push_back(leafTexIdx);
                 normalFilenames.push_back("Models/Textures/willow branch_NH.png");
                 normalIndices.push_back(leafNormalIdx);
-                printf("  -> Using leaf texture\n");
             }
         }
 
-        // 更新世界矩阵
         updateWorldMatrix();
     }
 
@@ -137,7 +141,6 @@ public:
         desc.VS = { shader->vs->GetBufferPointer(), shader->vs->GetBufferSize() };
         desc.PS = { shader->ps->GetBufferPointer(), shader->ps->GetBufferSize() };
 
-        // 光栅化设置 - 关闭背面剔除（树叶双面可见）
         D3D12_RASTERIZER_DESC rasterDesc = {};
         rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
         rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -152,7 +155,6 @@ public:
         rasterDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
         desc.RasterizerState = rasterDesc;
 
-        // 混合设置
         D3D12_BLEND_DESC blendDesc = {};
         blendDesc.AlphaToCoverageEnable = FALSE;
         blendDesc.IndependentBlendEnable = FALSE;
@@ -169,7 +171,6 @@ public:
         }
         desc.BlendState = blendDesc;
 
-        // 深度模板设置
         D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
         depthStencilDesc.DepthEnable = TRUE;
         depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -221,6 +222,29 @@ public:
         worldMatrix = s * r * t;
     }
 
+    void setInstanceOffset(int index, float x, float y, float z)
+    {
+        if (index >= 0 && index < INSTANCE_COUNT)
+        {
+            instanceOffsets[index * 4 + 0] = x;
+            instanceOffsets[index * 4 + 1] = y;
+            instanceOffsets[index * 4 + 2] = z;
+            instanceOffsets[index * 4 + 3] = 0.0f;
+        }
+    }
+
+    // 启用/禁用实例化
+    void setInstancing(bool enabled)
+    {
+        useInstancing = enabled;
+    }
+
+    // 切换实例化状态
+    void toggleInstancing()
+    {
+        useInstancing = !useInstancing;
+    }
+
     void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp)
     {
         // 设置VP矩阵
@@ -228,6 +252,9 @@ public:
         
         // 设置世界矩阵
         shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "W", &worldMatrix);
+        
+        // 设置实例偏移量
+        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "instanceOffsets", instanceOffsets);
 
         // 绑定PSO
         psos->bind(core, "TreePSO");
@@ -250,8 +277,27 @@ public:
                 shaders->updateTexturePS(core, "TreeShader", "normalTex", normalIndices[i]);
             }
 
-            meshes[i]->draw(core);
+            // 根据实例化开关决定绘制方式
+            if (useInstancing)
+            {
+                // 使用 instancing 绘制5棵树
+                drawInstanced(core, meshes[i]);
+            }
+            else
+            {
+                // 普通绘制1棵树
+                meshes[i]->draw(core);
+            }
         }
+    }
+
+    // 使用instancing绘制
+    void drawInstanced(Core* core, Mesh* mesh)
+    {
+        core->getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        core->getCommandList()->IASetVertexBuffers(0, 1, &mesh->vbView);
+        core->getCommandList()->IASetIndexBuffer(&mesh->ibView);
+        core->getCommandList()->DrawIndexedInstanced(mesh->numMeshIndices, INSTANCE_COUNT, 0, 0, 0);
     }
 
     ~Tree()

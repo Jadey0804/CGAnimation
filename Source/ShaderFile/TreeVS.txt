@@ -2,6 +2,7 @@ cbuffer staticMeshBuffer : register(b0)
 {
     float4x4 W;
     float4x4 VP;
+    float4 instanceOffsets[5];  // ????????
 };
 
 struct VS_INPUT
@@ -10,6 +11,7 @@ struct VS_INPUT
     float3 Normal : NORMAL;
     float3 Tangent : TANGENT;
     float2 TexCoords : TEXCOORD;
+    uint InstanceID : SV_InstanceID;
 };
 
 struct PS_INPUT
@@ -24,7 +26,15 @@ struct PS_INPUT
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output;
-    float4 worldPos = mul(input.Pos, W);
+    
+    // ??????????
+    float3 offset = instanceOffsets[input.InstanceID].xyz;
+    
+    // ??????????
+    float4 offsetPos = input.Pos;
+    offsetPos.xyz += offset;
+    
+    float4 worldPos = mul(offsetPos, W);
     output.WorldPos = worldPos.xyz;
     output.Pos = mul(worldPos, VP);
     output.Normal = normalize(mul(input.Normal, (float3x3)W));
