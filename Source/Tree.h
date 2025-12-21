@@ -33,7 +33,6 @@ public:
     // 风动画参数
     float windStrength;    // 风力强度
     float windSpeed;       // 风速
-    float leafThreshold;   // 树叶高度阈值（低于此高度的顶点不受风影响）
 
     Tree()
     {
@@ -46,7 +45,6 @@ public:
         // 风动画默认参数
         windStrength = 2.0f;     // 风力强度
         windSpeed = 2.0f;        // 风速
-        leafThreshold = 30.0f;   // 树叶高度阈值
         
         // 初始化实例偏移量，X轴相隔10
         for (int i = 0; i < INSTANCE_COUNT; i++)
@@ -256,11 +254,10 @@ public:
     }
 
     // 设置风动画参数
-    void setWindParameters(float strength, float speed, float threshold)
+    void setWindParameters(float strength, float speed)
     {
         windStrength = strength;
         windSpeed = speed;
-        leafThreshold = threshold;
     }
 
     void setWindStrength(float strength)
@@ -273,37 +270,29 @@ public:
         windSpeed = speed;
     }
 
-    void setLeafThreshold(float threshold)
-    {
-        leafThreshold = threshold;
-    }
-
     void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp, float time)
     {
-        // 设置VP矩阵
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "VP", &vp);
-        
-        // 设置世界矩阵
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "W", &worldMatrix);
-        
-        // 设置实例偏移量
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "instanceOffsets", instanceOffsets);
-
-        // 设置风动画参数
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "time", &time);
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windStrength", &windStrength);
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windSpeed", &windSpeed);
-        shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "leafThreshold", &leafThreshold);
-
         // 绑定PSO
         psos->bind(core, "TreePSO");
-
-        // 应用着色器
-        shaders->apply(core, "TreeShader");
 
         // 绘制每个网格
         for (size_t i = 0; i < meshes.size(); i++)
         {
+            // 设置 isLeaf 标志: 树干为0, 树叶为1
+            float isLeafValue = isBark[i] ? 0.0f : 1.0f;
+            
+            // 每个mesh绘制前设置所有常量缓冲区数据
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "VP", &vp);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "W", &worldMatrix);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "instanceOffsets", instanceOffsets);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "time", &time);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windStrength", &windStrength);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windSpeed", &windSpeed);
+            shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "isLeaf", &isLeafValue);
+            
+            // 应用着色器（只调用一次）
+            shaders->apply(core, "TreeShader");
+
             // 绑定颜色纹理 (t0)
             if (textureIndices[i] >= 0)
             {
