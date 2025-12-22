@@ -117,11 +117,6 @@ bool Level::loadFromFile(const std::string& levelPath)
             // AABB 碰撞检测：初始化状态
             e.isColliding = false;
             
-            // 初始化位置和朝向
-            e.currentPos = obj.pos;
-            e.currentRotY = degToRad(obj.rotDeg.y);
-            e.moveSpeed = 3.0f;  // 移动速度，可以根据需要调整
-            
             // 自动检测 idle 和 run 动画名称
             e.idleAnimName = "";
             e.runAnimName = "";
@@ -186,7 +181,7 @@ void Level::update(float dt, const Vec3& cameraPos)
     
     for (size_t i = 0; i < m_objects.size(); i++)
     {
-        LevelObject& o = m_objects[i];  // 改为非 const，因为可能需要更新位置
+        const LevelObject& o = m_objects[i];
         int animIdx = m_objectToAnimIndex[i];
         
         if (o.type != LevelObjType::Anim || animIdx < 0)
@@ -195,8 +190,8 @@ void Level::update(float dt, const Vec3& cameraPos)
         AnimEntry& e = m_animEntries[animIdx];
         if (!e.inited) continue;
         
-        // 计算动物的世界空间 AABB（使用当前位置）
-        Matrix W = buildWorld(o, animIdx);
+        // 计算动物的世界空间 AABB
+        Matrix W = buildWorld(o);
         AABB animalWorldAABB = TransformAABB(e.model->localAABB, W);
         
         // 检测碰撞
@@ -214,19 +209,6 @@ void Level::update(float dt, const Vec3& cameraPos)
             // 刚离开碰撞：切换回 idle 动画
             e.animName = e.idleAnimName;
             e.isColliding = false;
-        }
-        
-        // 如果正在碰撞（run 状态），让动物朝面朝方向移动
-        if (e.isColliding)
-        {
-            // 根据 Y 轴旋转角度计算前进方向
-            // rotY = 0 时朝 +Z 方向，rotY = 90° 时朝 +X 方向
-            float dirX = sinf(e.currentRotY);
-            float dirZ = cosf(e.currentRotY);
-            
-            // 更新位置
-            e.currentPos.x += dirX * e.moveSpeed * dt;
-            e.currentPos.z += dirZ * e.moveSpeed * dt;
         }
     }
     
@@ -269,7 +251,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
         if (o.type == LevelObjType::Static)
         {
             StaticModel* m = getOrLoadStatic(o.modelPath);
-            Matrix W = buildWorld(o, -1);
+            Matrix W = buildWorld(o);
             // updateWorld(Shaders*, Matrix&) + draw(Core*,PSOManager*,Shaders*,Matrix&)
             m->updateWorld(m_shaders, W);
             m->draw(m_core, m_psos, m_shaders, vp);
@@ -280,7 +262,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
             if (idx < 0 || idx >= (int)m_animEntries.size()) continue;
 
             AnimEntry& e = m_animEntries[idx];
-            Matrix W = buildWorld(o, idx);
+            Matrix W = buildWorld(o);
 
             // AnimatedModel::draw(Core*,PSOManager*,Shaders*,TextureManager*,AnimationInstance*,Matrix&,Matrix&)
             e.model->draw(m_core, m_psos, m_shaders, m_textures, &e.instance, vp, W);
@@ -341,21 +323,13 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
     return true;
 }
 
-Matrix Level::buildWorld(const LevelObject& o, int animIdx)
+Matrix Level::buildWorld(const LevelObject& o)
 {
     Matrix S = Matrix::scaling(o.scale);
     Matrix Rx = Matrix::rotateX(degToRad(o.rotDeg.x));
     Matrix Ry = Matrix::rotateY(degToRad(o.rotDeg.y));
     Matrix Rz = Matrix::rotateZ(degToRad(o.rotDeg.z));
-    
-    // 如果是动画对象且有有效的 animIdx，使用 AnimEntry 中的当前位置
-    Vec3 pos = o.pos;
-    if (animIdx >= 0 && animIdx < (int)m_animEntries.size())
-    {
-        pos = m_animEntries[animIdx].currentPos;
-    }
-    
-    Matrix T = Matrix::translation(pos);
+    Matrix T = Matrix::translation(o.pos);
 
     Matrix R = (Rx * Ry) * Rz;
     return (S * R) * T;

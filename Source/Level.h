@@ -68,11 +68,6 @@ private:
         bool isColliding = false;
         std::string idleAnimName;  // idle 动画名
         std::string runAnimName;   // run 动画名
-        
-        // 动物移动：当前位置和朝向角度
-        Vec3 currentPos;
-        float currentRotY;  // 当前 Y 轴旋转角度（弧度）
-        float moveSpeed;    // 移动速度
     };
 
     std::vector<LevelObject> m_objects;
@@ -84,6 +79,6 @@ private:
     AnimatedModel* getOrLoadAnim(const std::string& path);
 
     static bool parseLine(const std::string& line, LevelObject& outObj);
-    Matrix buildWorld(const LevelObject& o, int animIdx);  // 修改：需要 animIdx 来获取当前位置
+    static Matrix buildWorld(const LevelObject& o);
     static float degToRad(float deg) { return deg * 3.141592654f / 180.0f; }
 };

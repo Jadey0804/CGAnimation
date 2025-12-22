@@ -163,6 +163,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Models\acacia_003.gem" />
+    <None Include="Models\Bull-dark.gem" />
+    <None Include="Models\Cat-Dark.gem" />
+    <None Include="Models\Cat-Siamese.gem" />
+    <None Include="Models\Duck-brown.gem" />
     <None Include="Models\Pig.gem" />
     <None Include="Models\Sheep-01.gem" />
     <None Include="Models\Sheep-03.gem" />
@@ -182,6 +186,9 @@
     <Image Include="Models\Textures\Textures1_ALB.png" />
     <Image Include="Models\Textures\Textures1_NH.png" />
     <Image Include="Models\Textures\Textures1_RMAX.png" />
+    <Image Include="Models\Textures\T_Animalstextures_alb.png" />
+    <Image Include="Models\Textures\T_Animalstextures_nh.png" />
+    <Image Include="Models\Textures\T_Animalstextures_rmax.png" />
     <Image Include="Models\Textures\willow branch_ALB.png" />
     <Image Include="Models\Textures\willow branch_NH.png" />
     <Image Include="Models\Textures\willow branch_RMAX.png" />
