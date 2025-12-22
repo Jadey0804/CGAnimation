@@ -60,11 +60,6 @@ public:
                 // Calculate the local coordinate system axes of the camera
                 Matrix rotY = Matrix::rotateY(yaw);
 
-                // 注意：在视图空间中，相机的
-                // 前方向 = 局部 -Z 轴
-                // 右方向 = 局部 +X 轴  
-                // 上方向 = 局部 +Y 轴
-
                 Vec3 forward = rotY.mulVec(Vec3(0, 0, -1));  //
                 Vec3 right = rotY.mulVec(Vec3(1, 0, 0));
                 Vec3 up = Vec3(0, 1, 0);

@@ -19,7 +19,8 @@ float4 PS(PS_INPUT input) : SV_Target0
     // Alpha Test
     if (albedo.a < 0.5)
         discard;
-    
+   // return float4(albedo.rgb, 1.0);
+
     //Sample normal
     float3 normalMap = normalTex.Sample(samplerLinear, input.TexCoords).rgb;
     normalMap = normalMap * 2.0 - 1.0;
