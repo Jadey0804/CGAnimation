@@ -16,34 +16,7 @@ public:
 	Animation animation;
 	std::vector<std::string> textureFilenames;
 	
-	// AABB 碰撞检测：合并所有 mesh 的本地空间包围盒
 	AABB localAABB;
-
-	//// 标准化纹理路径
-	//static std::string normalizePath(const std::string& texPath)
-	//{
-	//	if (texPath.empty()) return "";
-	//	
-	//	std::string normalized = texPath;
-	//	// 替换反斜杠为正斜杠
-	//	std::replace(normalized.begin(), normalized.end(), '\\', '/');
-	//	
-	//	// 如果路径不包含Models/Textures，添加它
-	//	if (normalized.find("Models/Textures/") == std::string::npos)
-	//	{
-	//		// 只取文件名部分
-	//		size_t lastSlash = normalized.find_last_of("/");
-	//		if (lastSlash != std::string::npos)
-	//		{
-	//			normalized = "Models/Textures/" + normalized.substr(lastSlash + 1);
-	//		}
-	//		else
-	//		{
-	//			normalized = "Models/Textures/" + normalized;
-	//		}
-	//	}
-	//	return normalized;
-	//}
 
 	void load(Core* core, std::string filename, PSOManager* psos, Shaders* shaders)
 	{
@@ -52,7 +25,7 @@ public:
 		GEMLoader::GEMAnimation gemanimation;
 		loader.load(filename, gemmeshes, gemanimation);
 		
-		// 初始化 localAABB
+		// initialize localAABB
 		localAABB.reset();
 		
 		for (int i = 0; i < gemmeshes.size(); i++)
@@ -68,11 +41,11 @@ public:
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 			
-			// 合并每个 mesh 的 localAABB
+			// Merge the localAABB of each mesh
 			localAABB.expand(mesh->localAABB.min);
 			localAABB.expand(mesh->localAABB.max);
 
-			// 从材质中加载纹理路径并标准化
+			// 
 			std::string texFilename = gemmeshes[i].material.find("albedo").getValue();
 			//texFilename = normalizePath(texFilename);
 			textureFilenames.push_back(texFilename);
@@ -118,7 +91,7 @@ public:
 		}
 	}
 
-	// 预加载所有纹理
+	// preload all the textures 
 	void preloadTextures(TextureManager* textureManager)
 	{
 		for (const auto& texPath : textureFilenames)

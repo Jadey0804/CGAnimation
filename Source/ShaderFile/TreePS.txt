@@ -13,31 +13,29 @@ struct PS_INPUT
 
 float4 PS(PS_INPUT input) : SV_Target0
 {
-    // ???????
+    //Sample albedo
     float4 albedo = colorTex.Sample(samplerLinear, input.TexCoords);
     
-    // Alpha?? - ????????????
+    // Alpha Test
     if (albedo.a < 0.5)
         discard;
     
-    // ??????
+    //Sample normal
     float3 normalMap = normalTex.Sample(samplerLinear, input.TexCoords).rgb;
     normalMap = normalMap * 2.0 - 1.0;
     
-    // ??TBN??
+    // Normalize 
     float3 N = normalize(input.Normal);
     float3 T = normalize(input.Tangent);
     float3 B = cross(N, T);
     float3x3 TBN = float3x3(T, B, N);
     
-    // ???????????????
+    // Normalize the world normal
     float3 worldNormal = normalize(mul(normalMap, TBN));
-    
-    // ????
+       
     float3 lightDir = normalize(float3(0.3, 1.0, 0.2));
     float ndl = saturate(dot(worldNormal, lightDir));
     
-    // ??? + ???
     float3 ambient = 0.3 * albedo.rgb;
     float3 diffuse = ndl * albedo.rgb * 0.7;
     

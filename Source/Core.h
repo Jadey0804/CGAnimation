@@ -320,8 +320,8 @@ public:
 		// SRV Descriptor Table
 		D3D12_DESCRIPTOR_RANGE srvRange = {};
 		srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		srvRange.NumDescriptors = 8;  // 支持最多8个纹理（t0-t7）
-		srvRange.BaseShaderRegister = 0;  // 从t0开始
+		srvRange.NumDescriptors = 8;  // Supports up to 8 textures（t0-t7）
+		srvRange.BaseShaderRegister = 0;  // from t0
 		srvRange.RegisterSpace = 0;
 		srvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
@@ -332,7 +332,7 @@ public:
 		rootParameterTex.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		parameters.push_back(rootParameterTex);
 
-		//添加静态采样器
+		//Add static sampler
 		D3D12_STATIC_SAMPLER_DESC staticSampler = {};
 		staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 		staticSampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;

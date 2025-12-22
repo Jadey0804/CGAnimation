@@ -136,8 +136,8 @@ public:
 	Animation* animation;
 	std::string usingAnimation;
 	float t;
-	Matrix matrices[256]; // This is defined as 256 to match the maximum number in the shader
-	Matrix matricesPose[256]; // This is to store transforms needed for finding bone positions
+	Matrix matrices[256]; // defined as 256 to match the maximum number in the shader
+	Matrix matricesPose[256]; // to store transforms needed for finding bone positions
 	Matrix coordTransform;
 	void init(Animation* _animation, int fromYZX)
 	{

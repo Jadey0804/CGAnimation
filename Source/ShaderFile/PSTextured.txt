@@ -8,19 +8,19 @@
 
 float4 PS(PS_INPUT input) : SV_Target0
 {
-    // 棋盘格（完全程序生成，不采样任何纹理）
-    float2 uv = input.TexCoords * 10.0; // 密度：10 表示 10x10
-    float checker = fmod(floor(uv.x) + floor(uv.y), 2.0);
+    // Test
+    //float2 uv = input.TexCoords * 10.0; 
+    //float checker = fmod(floor(uv.x) + floor(uv.y), 2.0);
 
     float3 c0 = float3(0.15, 0.15, 0.15);
     float3 c1 = float3(0.85, 0.85, 0.85);
     float3 albedo = lerp(c0, c1, checker);
 
-    // 可选：一点点光照，让它更“立体”（不依赖任何常量/纹理）
-    float3 N = normalize(input.Normal);
-    float3 L = normalize(float3(0.3, 1.0, 0.2));
-    float ndl = saturate(dot(N, L));
-    float3 col = 0.15 * albedo + ndl * albedo;
+    
+   // float3 N = normalize(input.Normal);
+    //float3 L = normalize(float3(0.3, 1.0, 0.2));
+    //float ndl = saturate(dot(N, L));
+    //float3 col = 0.15 * albedo + ndl * albedo;
 
     return float4(col, 1.0);
 }

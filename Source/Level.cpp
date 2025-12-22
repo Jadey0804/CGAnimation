@@ -96,34 +96,20 @@ bool Level::loadFromFile(const std::string& levelPath)
             AnimEntry e;
             e.model = getOrLoadAnim(obj.modelPath);
 
-            // animName：优先用文件里的；没有就用模型里的第一个动画
-            if (!obj.animName.empty())
-            {
-                e.animName = obj.animName;
-            }
-            else if (!e.model->animation.animations.empty())
-            {
-                e.animName = e.model->animation.animations.begin()->first;
-            }
-            else
-            {
-                e.animName = "";
-            }
-
             // AnimationInstance::init(Animation*, int)
             e.instance.init(&e.model->animation, 0);
             e.inited = true;
             
-            // AABB 碰撞检测：初始化状态
+            // Initialization State
             e.isColliding = false;
             
-            // 自动检测 idle 和 run 动画名称
+            // Automatically detect idle and run animation names
             e.idleAnimName = "";
             e.runAnimName = "";
             for (auto& animPair : e.model->animation.animations)
             {
                 std::string name = animPair.first;
-                // 转小写比较
+                // Convert to lowercase for comparison
                 std::string lower = name;
                 for (auto& c : lower) c = tolower(c);
                 
@@ -134,31 +120,6 @@ bool Level::loadFromFile(const std::string& levelPath)
                 else if (lower.find("run") != std::string::npos || lower.find("walk") != std::string::npos)
                 {
                     e.runAnimName = name;
-                }
-            }
-            
-            // 如果没找到 idle，使用当前动画
-            if (e.idleAnimName.empty())
-            {
-                e.idleAnimName = e.animName;
-            }
-            // 如果没找到 run，使用第二个动画（如果有）
-            if (e.runAnimName.empty())
-            {
-                int count = 0;
-                for (auto& animPair : e.model->animation.animations)
-                {
-                    if (count == 1)
-                    {
-                        e.runAnimName = animPair.first;
-                        break;
-                    }
-                    count++;
-                }
-                // 如果只有一个动画，run 也用同一个
-                if (e.runAnimName.empty())
-                {
-                    e.runAnimName = e.idleAnimName;
                 }
             }
 
@@ -175,8 +136,8 @@ bool Level::loadFromFile(const std::string& levelPath)
 
 void Level::update(float dt, const Vec3& cameraPos)
 {
-    // 玩家 AABB：以相机位置为中心，半尺寸 0.5
-    Vec3 playerHalfSize(0.5f, 1.0f, 0.5f);
+    // payer AABB,centered on the camera position
+    Vec3 playerHalfSize(10.0f, 10.0f, 10.0f);
     AABB playerAABB = MakePlayerAABB(cameraPos, playerHalfSize);
     
     for (size_t i = 0; i < m_objects.size(); i++)
@@ -190,36 +151,36 @@ void Level::update(float dt, const Vec3& cameraPos)
         AnimEntry& e = m_animEntries[animIdx];
         if (!e.inited) continue;
         
-        // 计算动物的世界空间 AABB
+        //computing the world space of animals AABB
         Matrix W = buildWorld(o);
         AABB animalWorldAABB = TransformAABB(e.model->localAABB, W);
         
-        // 检测碰撞
+        // Collision detection
         bool nowColliding = Intersects(playerAABB, animalWorldAABB);
         
-        // 状态变化时切换动画
+        // Switching animations upon state change
         if (nowColliding && !e.isColliding)
         {
-            // 刚进入碰撞：切换到 run 动画
+            // switch to run animation
             e.animName = e.runAnimName;
             e.isColliding = true;
         }
         else if (!nowColliding && e.isColliding)
         {
-            // 刚离开碰撞：切换回 idle 动画
+            // Switch back to idle animation
             e.animName = e.idleAnimName;
             e.isColliding = false;
         }
     }
     
-    // 更新所有动画
+    // Updating all animations
     for (auto& e : m_animEntries)
     {
         if (!e.inited) continue;
         if (e.animName.empty()) continue;
 
-        // 保护：动画名不存在则不更新
-        if (!e.model->animation.hasAnimation(e.animName)) continue;
+        // if the animation name does not exist, do not update
+   /*     if (!e.model->animation.hasAnimation(e.animName)) continue;*/
 
         // AnimationInstance::update(name, dt)
         e.instance.update(e.animName, dt);
@@ -233,17 +194,16 @@ void Level::update(float dt, const Vec3& cameraPos)
 
 void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
 {
-    // 你 Game.cpp 里会更新 StaticModelUntextured / AnimatedTextured 的 VP 常量
+  
     m_shaders->updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
     m_shaders->updateConstantVS("AnimatedTextured", "staticMeshBuffer", "VP", &vp);
 
-    // 先画 plane（接口：Plane::draw(Core*,PSOManager*,Shaders*,TextureManager*,Matrix)）
     if (m_plane)
     {
         m_plane->draw(m_core, m_psos, m_shaders, m_textures, vp);
     }
 
-    // 再画静态/动画对象
+    // Draw static/animated objects
     for (size_t i = 0; i < m_objects.size(); i++)
     {
         const LevelObject& o = m_objects[i];
@@ -269,7 +229,7 @@ void Level::draw(Matrix& vp, Matrix& skyVP, float time, const Vec3& cameraPos)
         }
     }
 
-    // 最后画 skybox：W=translation(cameraPos), VP=无平移的 skyVP
+    //
     if (m_skybox)
     {
         Matrix W = Matrix::translation(cameraPos);
@@ -282,12 +242,12 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
     std::string s = line;
     if (s.empty()) return false;
 
-    // 跳过空白行
+    // skip blank lines
     bool allSpace = true;
     for (char c : s) { if (!isspace((unsigned char)c)) { allSpace = false; break; } }
     if (allSpace) return false;
 
-    // 跳过注释
+    // Skip comments
     size_t first = s.find_first_not_of(" \t\r\n");
     if (first == std::string::npos) return false;
     if (s[first] == '#') return false;
@@ -309,16 +269,11 @@ bool Level::parseLine(const std::string& line, LevelObject& outObj)
 
     outObj.type = toType(type);
 
-    // 格式: type model px py pz sx sy sz rx ry rz [animName]
+    // format: type model px py pz sx sy sz rx ry rz [animName]
     iss >> outObj.modelPath;
     iss >> outObj.pos.x >> outObj.pos.y >> outObj.pos.z;
     iss >> outObj.scale.x >> outObj.scale.y >> outObj.scale.z;
     iss >> outObj.rotDeg.x >> outObj.rotDeg.y >> outObj.rotDeg.z;
-
-    if (outObj.type == LevelObjType::Anim)
-    {
-        iss >> outObj.animName; // 可选
-    }
 
     return true;
 }

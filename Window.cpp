@@ -89,8 +89,8 @@ void Window::processMessages()
 	MSG msg;
 	ZeroMemory(&msg, sizeof(MSG));
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&msg);//翻译键盘消息
-		DispatchMessage(&msg);//分发到WndProc
+		TranslateMessage(&msg);//Translate keyboard messages
+		DispatchMessage(&msg);//Distributed to WndProc
 	}
 }
 

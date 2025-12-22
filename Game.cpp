@@ -61,43 +61,40 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Skybox skybox;
 	skybox.init(&core, &psos, &shaders, &textureManager,5000,500,10000);
 
-	// 初始化柳树
+	// willow init
 	Tree willowTree;
 	willowTree.init(&core, &shaders, &psos, &textureManager, "Models/willow.gem");
-	willowTree.setPosition(20, 0, 0);  // 放置在原点附近
-	willowTree.setScale(0.01f);         // 设置缩放
-	willowTree.setRotation(0.0f);      // 设置旋转角度
+	willowTree.setPosition(-20, -0.3, 0);  
+	willowTree.setScale(0.01f);         
+	willowTree.setRotation(0.0f);      
 
 	Level level;
 
 	level.init(&core, &psos, &shaders, &textureManager, &plane, &skybox);
 	level.loadFromFile("Levels/Level01.txt");
 
-	//手动设置纹理路径
+	//maually set texture paths
 	//for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
-	//{
-	//	// 清空或设置默认路径
+	//
 	//	animatedModel.textureFilenames[i] = "Models/Textures/T-rex_Base_Color_alb.png";
-	//	// 或者根据网格部分设置不同的纹理
 	//	// if (i == 0) animatedModel.textureFilenames[i] = "Models/TRex_body.png";
 	//	// else if (i == 1) animatedModel.textureFilenames[i] = "Models/TRex_eyes.png";
 	//}
-
-	// 然后确保纹理被加载
-	for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
-	{
-		if (!animatedModel.textureFilenames[i].empty())
-		{
-			textureManager.getTextureIndex(animatedModel.textureFilenames[i]);
-		}
-	}
+	// manually set texture paths
+	//for (int i = 0; i < animatedModel.textureFilenames.size(); i++)
+	//{
+	//	if (!animatedModel.textureFilenames[i].empty())
+	//	{
+	//		textureManager.getTextureIndex(animatedModel.textureFilenames[i]);
+	//	}
+	//}
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&animatedModel.animation, 0);
 
 	Timer timer;
 	float t = 0.0f;
-	bool key1Pressed = false;  // 用于检测按键状态变化
+	bool key1Pressed = false; 
 
 	while (1)
 	{
@@ -109,12 +106,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		window.checkInput();
 		if (window.keys[VK_ESCAPE] == 1) break;
 
-		// 按1键切换树的实例化
+		// press 1 to switch tree instantiation.
 		if (window.keys['1'] == 1)
 		{
 			if (!key1Pressed)
 			{
-				willowTree.toggleInstancing();
+				willowTree.changeInstancing();
 				key1Pressed = true;
 			}
 		}
@@ -135,11 +132,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		
 		core.beginRenderPass();
 
-		level.update(dt, fpscamera.position);  // 传入相机位置用于碰撞检测
+		level.update(dt, fpscamera.position);  // Input camera position for collision detection
 
 		level.draw(vp, skyVP, t, fpscamera.position);
 
-		// 绘制柳树（传递时间参数用于风动画）
+		// draw a willow tree ,time parameters for wind animation
 		willowTree.draw(&core, &psos, &shaders, vp, t);
 
 		core.finishFrame();

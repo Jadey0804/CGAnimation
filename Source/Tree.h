@@ -25,14 +25,13 @@ public:
     float scale;
     float rotation;
     
-    // Instancing 相关
+    // Instancing 
     static const int INSTANCE_COUNT = 5;
     float instanceOffsets[INSTANCE_COUNT * 4];
-    bool useInstancing;  // 是否启用实例化
+    bool useInstancing;  
 
-    // 风动画参数
-    float windStrength;    // 风力强度
-    float windSpeed;       // 风速
+    float windStrength;   
+    float windSpeed;       
 
     Tree()
     {
@@ -40,39 +39,32 @@ public:
         scale = 1.0f;
         rotation = 0.0f;
         textureManager = nullptr;
-        useInstancing = false;  // 默认关闭实例化
+        useInstancing = false;  //instantiation is disabled ,default.
         
-        // 风动画默认参数
-        windStrength = 2.0f;     // 风力强度
-        windSpeed = 2.0f;        // 风速
+        windStrength = 2.0f;     
+        windSpeed = 2.0f;        
         
-        // 初始化实例偏移量，X轴相隔10
+		// init instance offsets,x y, z, padding
         for (int i = 0; i < INSTANCE_COUNT; i++)
         {
-            instanceOffsets[i * 4 + 0] = i * 100.0f;  // X偏移
-            instanceOffsets[i * 4 + 1] = 0.0f;       // Y偏移
-            instanceOffsets[i * 4 + 2] = 0.0f;       // Z偏移
+			instanceOffsets[i * 4 + 0] = i * 1000.0f;  // X offset
+            instanceOffsets[i * 4 + 1] = 0.0f;      
+            instanceOffsets[i * 4 + 2] = 0.0f;      
             instanceOffsets[i * 4 + 3] = 0.0f;       // padding
         }
     }
 
-    void init(Core* core, Shaders* shaders, PSOManager* psos, TextureManager* texManager, 
-              std::string modelPath)
+    void init(Core* core, Shaders* shaders, PSOManager* psos, TextureManager* texManager, std::string modelPath)
     {
         textureManager = texManager;
 
-        // 加载着色器
         shaders->load(core, "TreeShader", "Source/ShaderFile/TreeVS.txt", "Source/ShaderFile/TreePS.txt");
-        
-        // 创建PSO
         createTreePSO(core, psos, shaders);
 
-        // 加载模型
         GEMLoader::GEMModelLoader loader;
         std::vector<GEMLoader::GEMMesh> gemmeshes;
         loader.load(modelPath, gemmeshes);
 
-        // 预加载所有纹理
         int barkTexIdx = textureManager->getTextureIndex("Models/Textures/bark02_ALB.png");
         int barkNormalIdx = textureManager->getTextureIndex("Models/Textures/bark02_NH.png");
         int leafTexIdx = textureManager->getTextureIndex("Models/Textures/willow branch_ALB.png");
@@ -93,7 +85,7 @@ public:
             mesh->init(core, vertices, gemmeshes[i].indices);
             meshes.push_back(mesh);
 
-            // 检查材质名称来判断是树干还是树叶
+            // check the material name to determine whether it is a tree trunk or leaves
             std::string materialName = gemmeshes[i].material.find("name").getValue("");
             std::string diffuseTex = gemmeshes[i].material.find("diffuse").getValue("");
 
@@ -204,11 +196,11 @@ public:
         updateWorldMatrix();
     }
 
-    void setPosition(Vec3 pos)
-    {
-        position = pos;
-        updateWorldMatrix();
-    }
+    //void setPosition(Vec3 pos)
+    //{
+    //    position = pos;
+    //    updateWorldMatrix();
+    //}
 
     void setScale(float s)
     {
@@ -241,19 +233,18 @@ public:
         }
     }
 
-    // 启用/禁用实例化
+    // Enable/disable instantiation
     void setInstancing(bool enabled)
     {
         useInstancing = enabled;
     }
 
-    // 切换实例化状态
-    void toggleInstancing()
+    // switching instantiation state
+    void changeInstancing()
     {
         useInstancing = !useInstancing;
     }
-
-    // 设置风动画参数
+	// Set wind parameters
     void setWindParameters(float strength, float speed)
     {
         windStrength = strength;
@@ -272,16 +263,14 @@ public:
 
     void draw(Core* core, PSOManager* psos, Shaders* shaders, Matrix& vp, float time)
     {
-        // 绑定PSO
         psos->bind(core, "TreePSO");
 
-        // 绘制每个网格
         for (size_t i = 0; i < meshes.size(); i++)
         {
-            // 设置 isLeaf 标志: 树干为0, 树叶为1
+            // Set the isLeaf flag: 0 for the trunk and 1 for the leaves.
             float isLeafValue = isBark[i] ? 0.0f : 1.0f;
             
-            // 每个mesh绘制前设置所有常量缓冲区数据
+            // set all constant buffer data before each mesh is drawn.
             shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "VP", &vp);
             shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "W", &worldMatrix);
             shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "instanceOffsets", instanceOffsets);
@@ -290,36 +279,33 @@ public:
             shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "windSpeed", &windSpeed);
             shaders->updateConstantVS("TreeShader", "staticMeshBuffer", "isLeaf", &isLeafValue);
             
-            // 应用着色器（只调用一次）
             shaders->apply(core, "TreeShader");
 
-            // 绑定颜色纹理 (t0)
+            //(t0)
             if (textureIndices[i] >= 0)
             {
                 shaders->updateTexturePS(core, "TreeShader", "colorTex", textureIndices[i]);
             }
 
-            // 绑定法线纹理 (t1)
+            // normal (t1)
             if (normalIndices[i] >= 0)
             {
                 shaders->updateTexturePS(core, "TreeShader", "normalTex", normalIndices[i]);
             }
 
-            // 根据实例化开关决定绘制方式
+            // Determine drawing method based on instancing switch
             if (useInstancing)
             {
-                // 使用 instancing 绘制5棵树
+                // Draw 5 trees using instancing
                 drawInstanced(core, meshes[i]);
             }
             else
             {
-                // 普通绘制1棵树
                 meshes[i]->draw(core);
             }
         }
     }
 
-    // 使用instancing绘制
     void drawInstanced(Core* core, Mesh* mesh)
     {
         core->getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -85,14 +85,14 @@ public:
 
 	bool isMouseLocked = false;
 
-	// 锁定或解锁鼠标
+	// 
 	void setMouseLock(bool lock) {
 		useMouseClip = lock;
 		isMouseLocked = lock;
 		if (lock) {
 			clipMouseToWindow();
 			ShowCursor(false);
-			// 将鼠标移动到窗口中心
+			// move the mouse to the center of the window
 
 			RECT rect;
 			GetClientRect(hwnd, &rect);

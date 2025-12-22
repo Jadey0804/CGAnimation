@@ -48,7 +48,6 @@ public:
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 	unsigned int numMeshIndices;
 	
-	// AABB ????????????
 	AABB localAABB;
 
 	void init(Core* core, void* vertices, int vertexSizeInBytes, int numVertices, unsigned int* indices, int numIndices)
@@ -103,7 +102,7 @@ public:
 		init(core, &vertices[0], sizeof(STATIC_VERTEX), vertices.size(), &indices[0], indices.size());
 		inputLayoutDesc = VertexLayoutCache::getStaticLayout();
 		
-		// ?? localAABB????? position
+		//  compute local AABB
 		localAABB.reset();
 		for (size_t i = 0; i < vertices.size(); i++)
 		{
@@ -115,7 +114,7 @@ public:
 		init(core, &vertices[0], sizeof(ANIMATED_VERTEX), vertices.size(), &indices[0], indices.size());
 		inputLayoutDesc = VertexLayoutCache::getAnimatedLayout();
 		
-		// ?? localAABB????? position
+		// 
 		localAABB.reset();
 		for (size_t i = 0; i < vertices.size(); i++)
 		{

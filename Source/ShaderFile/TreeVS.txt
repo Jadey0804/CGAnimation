@@ -2,11 +2,11 @@ cbuffer staticMeshBuffer : register(b0)
 {
     float4x4 W;
     float4x4 VP;
-    float4 instanceOffsets[5];  // ?????
-    float time;                  // ????????
-    float windStrength;          // ????
-    float windSpeed;             // ??
-    float isLeaf;                // ????? (1.0 = ??, 0.0 = ??)
+    float4 instanceOffsets[5]; 
+    float time;                  
+    float windStrength;          
+    float windSpeed;           
+    float isLeaf;            
 };
 
 struct VS_INPUT
@@ -31,35 +31,27 @@ PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    // ???????
     float3 offset = instanceOffsets[input.InstanceID].xyz;
-    
-    // ???????
+
     float4 offsetPos = input.Pos;
     offsetPos.xyz += offset;
-    
-    // ????? - ??????????
+
+    //Wind animation for leaves
     if (isLeaf > 0.5)
     {
-        // ???????????????????????????
         float phase = offsetPos.x * 0.1 + offsetPos.z * 0.1 + input.InstanceID * 1.5;
-        
-        // ??????X???
-        float windX = sin(time * windSpeed + phase) * windStrength;
-        
-        // ?????Z????????
+        float windX = sin(time * windSpeed + phase) * windStrength;        
         float windZ = sin(time * windSpeed * 1.3 + phase * 0.7) * windStrength * 0.5;
-        
-        // ??????
         float windY = sin(time * windSpeed * 0.8 + phase * 1.2) * windStrength * 0.2;
         
         offsetPos.x += windX;
         offsetPos.y += windY;
         offsetPos.z += windZ;
     }
-    
+
     float4 worldPos = mul(offsetPos, W);
     output.WorldPos = worldPos.xyz;
+
     output.Pos = mul(worldPos, VP);
     output.Normal = normalize(mul(input.Normal, (float3x3)W));
     output.Tangent = normalize(mul(input.Tangent, (float3x3)W));

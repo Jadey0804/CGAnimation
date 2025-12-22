@@ -14,7 +14,7 @@ public:
 
     bool init(Core* core, const std::string& filename)
     {
-        // 使用stb_image加载纹理
+        // load textures using stb_image
         unsigned char* texels = stbi_load(filename.c_str(), &width, &height, &channels, 0);
         if (!texels)
         {
@@ -22,7 +22,7 @@ public:
             return false;
         }
 
-        // 如果只有3个通道，转换为4通道
+        // if there are only 3 channels, convert to 4 channels.
         unsigned char* texelsWithAlpha = nullptr;
         if (channels == 3)
         {
@@ -37,7 +37,7 @@ public:
             }
         }
 
-        // 创建纹理资源
+        // creating texture resources
         DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
         D3D12_HEAP_PROPERTIES heapDesc;
@@ -60,7 +60,7 @@ public:
         core->device->CreateCommittedResource(&heapDesc, D3D12_HEAP_FLAG_NONE,
             &textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&tex));
 
-        // 计算上传所需的内存布局
+        // Calculate the memory layout required for uploading
         D3D12_RESOURCE_DESC desc = tex->GetDesc();
         unsigned long long size;
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
@@ -70,7 +70,7 @@ public:
 
         core->device->GetCopyableFootprints(&desc, 0, 1, 0, &footprint, &numRows, &rowSizeInBytes, &totalBytes);
 
-        // 上传纹理数据
+        // Upload texture data
         unsigned int alignedWidth = ((width * channels) + 255) & ~255;
         core->uploadResource(tex,
             (channels == 4 && texelsWithAlpha) ? texelsWithAlpha : texels,
@@ -78,7 +78,7 @@ public:
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             &footprint);
 
-        // 创建Shader Resource View
+        // Create Shader Resource View
         D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = core->srvHeap.getNextCPUHandle();
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -88,10 +88,10 @@ public:
 
         core->device->CreateShaderResourceView(tex, &srvDesc, srvHandle);
 
-        // 保存堆偏移量
+        // save heaoffset
         heapOffset = core->srvHeap.used - 1;
 
-        // 清理
+       
         stbi_image_free(texels);
         if (texelsWithAlpha) delete[] texelsWithAlpha;
 

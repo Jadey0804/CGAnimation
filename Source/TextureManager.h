@@ -14,30 +14,27 @@ public:
         core = _core;
     }
 
-    // 修改getTextureIndex函数，支持自动加载
+    // Modify the getTextureIndex function to support automatic loading
     int getTextureIndex(const std::string& filename)
     {
-        // 如果文件名为空，返回-1（无纹理）
+        // if filename is empty, return -1 (no texture)
         if (filename.empty())
         {
-            printf("Warning: Empty texture filename\n");
             return -1;
         }
 
-        // 如果已经加载过，直接返回索引
+        // if  already been loaded, return the index
         auto it = textures.find(filename);
         if (it != textures.end())
         {
             return it->second->heapOffset;
         }
 
-        // 自动加载纹理
-        printf("Loading texture: %s\n", filename.c_str());
+        // Automatically load texture
 
         Texture* texture = new Texture();
-        if (!texture->init(core, filename))  // 修改init函数返回bool
+        if (!texture->init(core, filename))  // Change init function to return bool
         {
-            printf("Failed to load texture: %s\n", filename.c_str());
             delete texture;
             return -1;
         }

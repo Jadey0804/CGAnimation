@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-
 #include "Maths.h"
 #include "StaticModel.h"
 #include "AnimatedModel.h"
@@ -21,7 +20,7 @@ struct LevelObject
 {
     LevelObjType type = LevelObjType::Static;
     std::string modelPath;   // STATIC / ANIM
-    std::string animName;    // ANIM 可选：动画名称
+    std::string animName;    // 
 
     Vec3 pos{ 0,0,0 };
     Vec3 scale{ 1,1,1 };
@@ -53,7 +52,6 @@ private:
     AnimatedModel* allocAlignedAnim();
     void freeAlignedAnim(AnimatedModel* p);
 
-
     std::unordered_map<std::string, StaticModel*>   m_staticCache;
     std::unordered_map<std::string, AnimatedModel*> m_animCache;
 
@@ -64,10 +62,15 @@ private:
         std::string animName;
         bool inited = false;
         
-        // AABB 碰撞检测：状态变量，避免每帧重复重置动画
+        //  avoid resetting animation every frame
         bool isColliding = false;
-        std::string idleAnimName;  // idle 动画名
-        std::string runAnimName;   // run 动画名
+        std::string idleAnimName;  
+        std::string runAnimName;   
+
+        //float AnimRotY;
+		//float AnimMoveSpeed;
+		//Vec3 AnimCurrentPos;
+
     };
 
     std::vector<LevelObject> m_objects;

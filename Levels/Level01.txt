@@ -1,13 +1,14 @@
-﻿# Level配置文件格式:
+﻿# Level format:
 # type model px py pz sx sy sz rx ry rz [animName]
 
-# type  model                         px py pz   sx sy sz      rx ry rz   [anim]
-#STATIC  Models/acacia_003.gem          10 0 0     0.01 0.01 0.01  0 0 0
-#STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01  0 45 0
-ANIM    Models/Pig.gem                 0 0 0     0.01 0.01 0.01  0 180 0  idle
-ANIM    Models/Sheep-01.gem             3 0 3     0.01 0.01 0.01  0 90 0  idle
-ANIM    Models/TRex.gem            -3 0 3     0.01 0.01 0.01  0 7 0 idle
-ANIM    Models/Bull-dark.gem            3 0 -3     0.01 0.01 0.01  0 20 0 idle
-ANIM    Models/Cat-dark.gem            -3 0 -3     0.01 0.01 0.01  0 50 0 idle
-ANIM    Models/Duck-brown.gem            6 0 3     0.01 0.01 0.01  0 195 0 idle
+# type  model                          px py pz        sx sy sz		  rx ry rz     [anim]
+#STATIC  Models/acacia_003.gem          10 0 5     0.01 0.01 0.01		0 0 0
+#STATIC  Models/acacia_003.gem           5 0 0     0.01 0.01 0.01		0 80 0
+ANIM    Models/Pig.gem                   -8 0 1    0.01 0.01 0.01		0 180 0		idle
+ANIM    Models/Sheep-01.gem              3 0 3     0.01 0.01 0.01		0 90 0		idle
+ANIM    Models/TRex.gem                 -3 0 3     0.01 0.01 0.01		0 7 0		idle
+ANIM    Models/Bull-dark.gem             3 0 -3    0.01 0.01 0.01		0 20 0		idle
+ANIM    Models/Cow-brown.gem            6 0 -3	   0.01 0.01 0.01		0 50 0		idle
+ANIM    Models/Duck-brown.gem            6 0 3     0.01 0.01 0.01		0 195 0		idle
+ANIM    Models/TRex.gem                 -6 0 -3    0.005 0.005 0.005	0 7 0		idle
 
